@@ -57,6 +57,21 @@ class ClaudeProvider(AIProvider):
                 }
             )
 
+        # Source images (photos of worksheets, rendered PDF pages) go ahead of the
+        # text prompt so the model reads them as the material being taught from.
+        user_content: list[dict] = [
+            {
+                "type": "image",
+                "source": {
+                    "type": "base64",
+                    "media_type": "image/jpeg",
+                    "data": image,
+                },
+            }
+            for image in request.images
+        ]
+        user_content.append({"type": "text", "text": request.prompt})
+
         message = client.messages.create(
             model=model,
             max_tokens=request.max_tokens,
@@ -69,7 +84,7 @@ class ClaudeProvider(AIProvider):
                 }
             ],
             tool_choice={"type": "tool", "name": _TOOL_NAME},
-            messages=[{"role": "user", "content": request.prompt}],
+            messages=[{"role": "user", "content": user_content}],
         )
 
         for block in message.content:

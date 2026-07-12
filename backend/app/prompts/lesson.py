@@ -37,6 +37,11 @@ Quality rules you must follow:
 - correct_feedback should briefly reinforce *why* the answer is right.
 - Every question must have a hint that nudges without giving away the answer.
 - Do not repeat questions. Each activity must test something distinct.
+- Uploaded images (if any) ARE the source material: read them fully, including
+  diagrams, tables, and handwriting. When a section directly teaches from or asks
+  about one of the uploaded images, set its "image_ref" to that image's 0-based
+  index so the app shows the child the actual picture. Only reference images that
+  were actually provided; never invent an index.
 - Give every section a relevant "emoji" (e.g. ☀️ for evaporation) and add an
   "emoji" to options where a picture helps (especially for young children). The
   emoji is the visual for that content. NEVER use an emoji that reveals the
@@ -90,7 +95,8 @@ Produce:
 4. The order concepts should be taught, including any prerequisites.
 5. A recommended progression of activities from easy to challenging.
 
-SOURCE MATERIAL:
+SOURCE MATERIAL (any attached images are also source material -- read them fully,
+including diagrams, tables, and handwriting):
 \"\"\"
 {source_text}
 \"\"\"

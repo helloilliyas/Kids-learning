@@ -49,6 +49,8 @@ class LessonRequest:
     difficulty: str = "beginner"
     language: str = "en"
     num_questions: int = 6
+    # Base64 JPEG source images (photos, scans, rendered PDF pages).
+    source_images: list[str] | None = None
 
 
 class LessonGenerator:
@@ -66,6 +68,7 @@ class LessonGenerator:
                 ),
                 schema=_PLAN_SCHEMA,
                 tier="small",
+                images=list(req.source_images or []),
             )
         )
 
@@ -82,17 +85,27 @@ class LessonGenerator:
                 schema=_lesson_schema(),
                 tier="strong",
                 max_tokens=8192,
+                images=list(req.source_images or []),
             )
         )
 
-        return self._validate(lesson)
+        return self._validate(lesson, num_images=len(req.source_images or []))
 
-    def _validate(self, lesson: dict) -> GenerationResult:
+    def _validate(self, lesson: dict, num_images: int = 0) -> GenerationResult:
         struct = structural_errors(lesson)
         if struct:
             # If it is not even structurally valid, semantic checks may crash; skip them.
             return GenerationResult(lesson=lesson, structural_errors=struct, semantic_errors=[])
         semantic = [str(e) for e in validate_lesson(lesson).errors]
+        # image_ref indexes into the images uploaded with THIS request; the model
+        # must never invent an index that does not exist.
+        for section in lesson.get("sections", []):
+            ref = section.get("image_ref")
+            if ref is not None and not (0 <= ref < num_images):
+                semantic.append(
+                    f"invalid_image_ref [{section.get('id')}]: image_ref {ref} but "
+                    f"only {num_images} source image(s) were provided."
+                )
         return GenerationResult(lesson=lesson, structural_errors=[], semantic_errors=semantic)
 
 

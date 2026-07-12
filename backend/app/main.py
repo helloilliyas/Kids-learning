@@ -54,6 +54,9 @@ class GenerateBody(BaseModel):
     difficulty: str = Field(default="beginner")
     language: str = Field(default="en")
     num_questions: int = Field(default=6, ge=1, le=20)
+    # Base64 JPEG images (no data: prefix): photos of worksheets/textbook pages or
+    # PDF pages rendered by the app. Capped to keep requests and vision costs sane.
+    source_images: list[str] = Field(default_factory=list, max_length=8)
 
 
 class ValidateBody(BaseModel):
@@ -79,6 +82,7 @@ def generate_lesson(body: GenerateBody, _: None = Depends(require_token)) -> dic
             subject=body.subject, objective=body.objective,
             difficulty=body.difficulty, language=body.language,
             num_questions=body.num_questions,
+            source_images=body.source_images,
         )
     )
     return {

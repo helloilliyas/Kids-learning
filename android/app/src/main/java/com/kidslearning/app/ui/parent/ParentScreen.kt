@@ -1,9 +1,15 @@
 package com.kidslearning.app.ui.parent
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,11 +26,13 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -32,28 +40,34 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kidslearning.app.data.local.Prefs
+import com.kidslearning.app.data.local.SourceImages
 import com.kidslearning.app.data.remote.BackendClient
 import com.kidslearning.app.domain.model.Lesson
 import com.kidslearning.app.ui.theme.Workbook
 import kotlinx.coroutines.launch
 
 /**
- * Parent mode: create a lesson from a topic (plus optional pasted source text) by
- * calling the generation backend, and configure the backend connection.
- *
- * The generated lesson is NOT shown to the child from here -- it goes to the
- * preview screen for parent review and approval first.
+ * Parent mode: create a lesson from a topic, optional pasted text, and optional
+ * source images -- camera snaps, photos from the phone, or PDF pages (rendered to
+ * images on-device). Images travel to the backend where the AI reads them as the
+ * source material; sections that teach from a specific image reference it so the
+ * child sees the real picture in the lesson.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ParentScreen(
     prefs: Prefs,
-    onPreview: (Lesson) -> Unit,
+    onPreview: (Lesson, List<ByteArray>) -> Unit,
     onExit: () -> Unit,
 ) {
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
     var topic by remember { mutableStateOf("") }
@@ -61,12 +75,31 @@ fun ParentScreen(
     var age by remember { mutableStateOf("8") }
     var sourceText by remember { mutableStateOf("") }
     var objective by remember { mutableStateOf("") }
+    val images = remember { mutableStateListOf<ByteArray>() }
 
     var backendUrl by remember { mutableStateOf(prefs.backendUrl) }
     var appToken by remember { mutableStateOf(prefs.appToken) }
 
     var busy by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
+
+    val takePhoto = rememberLauncherForActivityResult(
+        ActivityResultContracts.TakePicturePreview()
+    ) { bitmap ->
+        bitmap?.let { images.add(SourceImages.compress(it)) }
+    }
+    val pickImages = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickMultipleVisualMedia(SourceImages.MAX_IMAGES)
+    ) { uris ->
+        uris.take(SourceImages.MAX_IMAGES - images.size).forEach { uri ->
+            SourceImages.fromUri(context, uri)?.let { images.add(it) }
+        }
+    }
+    val pickPdf = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        uri?.let { images.addAll(SourceImages.fromPdf(context, it).take(SourceImages.MAX_IMAGES - images.size)) }
+    }
 
     Column(modifier = Modifier.fillMaxSize().background(Workbook.PageBackground)) {
         Surface(
@@ -138,8 +171,74 @@ fun ParentScreen(
                     OutlinedTextField(
                         value = sourceText, onValueChange = { sourceText = it },
                         label = { Text("Paste source material (optional)") },
-                        minLines = 4, maxLines = 10, modifier = Modifier.fillMaxWidth(),
+                        minLines = 3, maxLines = 8, modifier = Modifier.fillMaxWidth(),
                     )
+
+                    Text(
+                        "Add material from the camera, photos, or a PDF — the AI reads " +
+                            "it (including diagrams and handwriting) and teaches from it.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Workbook.TextMuted,
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        val room = images.size < SourceImages.MAX_IMAGES
+                        OutlinedButton(onClick = { takePhoto.launch(null) }, enabled = room) {
+                            Text("📷 Camera")
+                        }
+                        OutlinedButton(
+                            onClick = {
+                                pickImages.launch(
+                                    PickVisualMediaRequest(
+                                        ActivityResultContracts.PickVisualMedia.ImageOnly
+                                    )
+                                )
+                            },
+                            enabled = room,
+                        ) { Text("🖼 Photos") }
+                        OutlinedButton(
+                            onClick = { pickPdf.launch(arrayOf("application/pdf")) },
+                            enabled = room,
+                        ) { Text("📄 PDF") }
+                    }
+
+                    if (images.isNotEmpty()) {
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            images.forEachIndexed { index, bytes ->
+                                val bitmap = remember(bytes) { SourceImages.decode(bytes) }
+                                if (bitmap != null) {
+                                    Card(
+                                        onClick = { images.removeAt(index) },
+                                        shape = MaterialTheme.shapes.small,
+                                    ) {
+                                        Box {
+                                            Image(
+                                                bitmap = bitmap.asImageBitmap(),
+                                                contentDescription = "Attached page ${index + 1}",
+                                                contentScale = ContentScale.Crop,
+                                                modifier = Modifier.size(72.dp),
+                                            )
+                                            Text(
+                                                "✕",
+                                                color = Color.White,
+                                                modifier = Modifier
+                                                    .align(Alignment.TopEnd)
+                                                    .background(Color(0x99000000))
+                                                    .padding(horizontal = 6.dp, vertical = 1.dp),
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        Text(
+                            "${images.size} page(s) attached · tap a picture to remove it",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Workbook.TextMuted,
+                        )
+                    }
 
                     error?.let {
                         Text(it, color = MaterialTheme.colorScheme.error,
@@ -166,11 +265,12 @@ fun ParentScreen(
                                             age = age.toInt(),
                                             subject = subject.trim(),
                                             objective = objective.trim(),
+                                            sourceImages = images.map(SourceImages::toBase64),
                                         )
                                     )
                                     val lesson = response.lesson
                                     when {
-                                        response.ok && lesson != null -> onPreview(lesson)
+                                        response.ok && lesson != null -> onPreview(lesson, images.toList())
                                         lesson != null ->
                                             error = "The lesson failed validation: " +
                                                 (response.structuralErrors + response.semanticErrors)

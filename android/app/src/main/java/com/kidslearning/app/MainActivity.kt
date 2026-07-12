@@ -24,6 +24,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -35,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -44,6 +46,7 @@ import com.kidslearning.app.data.local.ConceptMasteryEntity
 import com.kidslearning.app.data.local.DatabaseProvider
 import com.kidslearning.app.data.local.LessonEntity
 import com.kidslearning.app.data.local.Prefs
+import com.kidslearning.app.data.local.SourceImages
 import com.kidslearning.app.data.remote.LessonJson
 import com.kidslearning.app.domain.model.AnswerResult
 import com.kidslearning.app.domain.model.ConceptMastery
@@ -54,6 +57,7 @@ import com.kidslearning.app.ui.child.Tts
 import com.kidslearning.app.ui.parent.ParentGate
 import com.kidslearning.app.ui.parent.ParentScreen
 import com.kidslearning.app.ui.parent.PreviewScreen
+import com.kidslearning.app.ui.renderers.LocalLessonImageResolver
 import com.kidslearning.app.ui.theme.KidsTheme
 import com.kidslearning.app.ui.theme.Workbook
 import com.kidslearning.app.ui.theme.subjectEmoji
@@ -88,7 +92,7 @@ private sealed interface Screen {
     data class Playing(val lesson: Lesson) : Screen
     data object Gate : Screen
     data object Parent : Screen
-    data class Preview(val lesson: Lesson) : Screen
+    data class Preview(val lesson: Lesson, val images: List<ByteArray>) : Screen
 }
 
 @Composable
@@ -160,12 +164,25 @@ private fun App() {
             onParent = { screen = Screen.Gate },
         )
 
-        is Screen.Playing -> LessonPlayerScreen(
-            lesson = current.lesson,
-            speak = tts::speak,
-            onExit = { screen = Screen.Home },
-            onResult = { persistResult(current.lesson, it) },
-        )
+        is Screen.Playing -> {
+            val imageCache = remember(current.lesson.lessonId) {
+                mutableMapOf<Int, androidx.compose.ui.graphics.ImageBitmap?>()
+            }
+            CompositionLocalProvider(
+                LocalLessonImageResolver provides { index ->
+                    imageCache.getOrPut(index) {
+                        SourceImages.load(context, current.lesson.lessonId, index)?.asImageBitmap()
+                    }
+                }
+            ) {
+                LessonPlayerScreen(
+                    lesson = current.lesson,
+                    speak = tts::speak,
+                    onExit = { screen = Screen.Home },
+                    onResult = { persistResult(current.lesson, it) },
+                )
+            }
+        }
 
         is Screen.Gate -> ParentGate(
             onUnlock = { screen = Screen.Parent },
@@ -174,7 +191,7 @@ private fun App() {
 
         is Screen.Parent -> ParentScreen(
             prefs = prefs,
-            onPreview = { screen = Screen.Preview(it) },
+            onPreview = { lesson, images -> screen = Screen.Preview(lesson, images) },
             onExit = { screen = Screen.Home },
         )
 
@@ -183,6 +200,7 @@ private fun App() {
             onApprove = {
                 scope.launch(Dispatchers.IO) {
                     val now = System.currentTimeMillis()
+                    SourceImages.save(context, current.lesson.lessonId, current.images)
                     db.lessonDao().upsertLesson(
                         LessonEntity(
                             lessonId = current.lesson.lessonId,

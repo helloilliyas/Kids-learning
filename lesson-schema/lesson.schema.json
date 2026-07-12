@@ -121,6 +121,11 @@
           "maxLength": 16,
           "description": "Optional emoji displayed large above this section -- the offline visual anchor for the concept (e.g. ☀️ for evaporation)."
         },
+        "image_ref": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "0-based index into the source images uploaded with the generation request. When set, the app shows the child that actual photo/scan/PDF page with this section. Must reference an image that was really provided."
+        },
         "grounding": { "$ref": "#/$defs/grounding" }
       }
     },

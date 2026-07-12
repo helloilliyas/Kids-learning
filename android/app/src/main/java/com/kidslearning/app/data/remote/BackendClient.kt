@@ -29,6 +29,8 @@ class BackendClient(baseUrl: String, private val token: String?) {
         val difficulty: String = "beginner",
         val language: String = "en",
         @SerialName("num_questions") val numQuestions: Int = 6,
+        // Base64 JPEGs: camera shots, picked photos, or PDF pages rendered on-device.
+        @SerialName("source_images") val sourceImages: List<String> = emptyList(),
     )
 
     @Serializable

@@ -15,7 +15,7 @@ provider's job, not the caller's.
 from __future__ import annotations
 
 import abc
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -31,6 +31,10 @@ class GenerationRequest:
     # every Extend Lesson request) goes here so providers that support prompt
     # caching can mark it cacheable and cut the repeat cost dramatically.
     cacheable_prefix: str | None = None
+    # Source images (base64 JPEG, no data: prefix): photos of worksheets, textbook
+    # pages, or rendered PDF pages. Vision-capable providers read them as the
+    # source material alongside the prompt.
+    images: list[str] = field(default_factory=list)
 
 
 class AIProvider(abc.ABC):

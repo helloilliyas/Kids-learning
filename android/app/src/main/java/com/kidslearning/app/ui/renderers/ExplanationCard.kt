@@ -62,6 +62,8 @@ fun ExplanationCard(
             }
         }
 
+        SectionImage(section.imageRef)
+
         section.imageDescription?.let { description ->
             Card(
                 colors = CardDefaults.cardColors(containerColor = Workbook.Pink),

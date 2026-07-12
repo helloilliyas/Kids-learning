@@ -85,6 +85,8 @@ fun ActivityScaffold(
                 )
             }
 
+            SectionImage(activity.imageRef)
+
             answerArea()
 
             AnimatedVisibility(visible = hintShown, enter = fadeIn() + expandVertically()) {

@@ -3,8 +3,10 @@
 
     <!-- Network is used only to reach the private backend over HTTPS. No other
          data leaves the device; child data stays local by default. -->
+    <!-- No CAMERA permission: photos are taken via the system camera app
+         (ACTION_IMAGE_CAPTURE), which requires none from us — and declaring it
+         unused would actually break that intent on some devices. -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.CAMERA" />
 
     <!-- usesCleartextTraffic allows plain-http backends during local testing on a
          home network (e.g. http://192.168.x.x:8000). Production backends use HTTPS. -->
