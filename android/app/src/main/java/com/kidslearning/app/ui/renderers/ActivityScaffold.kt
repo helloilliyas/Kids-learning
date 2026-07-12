@@ -1,5 +1,8 @@
 package com.kidslearning.app.ui.renderers
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,19 +24,25 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.kidslearning.app.domain.model.Activity
 import com.kidslearning.app.domain.model.AnswerResult
 
 /**
- * State + chrome every interactive activity shares: a prompt, an optional hint
- * (revealed on request), a Check button, feedback, and retry-until-correct.
+ * State + chrome every interactive activity shares: a big emoji visual, the
+ * prompt, an optional hint (revealed on request), a Check button, animated
+ * feedback with haptics, and retry-until-correct.
  *
  * Renderers supply only their answer area and a scoring lambda; this scaffold owns
  * attempts/hint bookkeeping and emits the standardized [AnswerResult] exactly once,
- * when the child gets it right. Incorrect answers show the teaching feedback and
- * let the child try again, per the age-adaptation rules.
+ * when the child gets it right. Incorrect answers show the teaching feedback in a
+ * warm (not scary) colour and let the child try again.
  */
 @Composable
 fun ActivityScaffold(
@@ -52,11 +61,21 @@ fun ActivityScaffold(
     var solved by rememberSaveable(activity.id) { mutableStateOf(false) }
     var feedback by remember(activity.id) { mutableStateOf<String?>(null) }
     var feedbackIsPositive by remember(activity.id) { mutableStateOf(false) }
+    val haptic = LocalHapticFeedback.current
 
     Column(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
+        activity.emoji?.let {
+            Text(
+                it,
+                fontSize = 52.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+            )
+        }
+
         SpeakableText(
             text = prompt,
             style = MaterialTheme.typography.titleLarge,
@@ -66,24 +85,30 @@ fun ActivityScaffold(
 
         answerArea()
 
-        if (hintShown) {
+        AnimatedVisibility(visible = hintShown, enter = fadeIn() + expandVertically()) {
             Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
-                Text(
-                    "💡 ${activity.hint}",
-                    modifier = Modifier.padding(14.dp),
-                    style = MaterialTheme.typography.bodyLarge,
-                )
+                Row(modifier = Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("💡", fontSize = 24.sp, modifier = Modifier.padding(end = 10.dp))
+                    Text(activity.hint, style = MaterialTheme.typography.bodyLarge)
+                }
             }
         }
 
-        feedback?.let {
+        AnimatedVisibility(visible = feedback != null, enter = fadeIn() + expandVertically()) {
             Card(
                 colors = CardDefaults.cardColors(
                     containerColor = if (feedbackIsPositive) MaterialTheme.colorScheme.tertiaryContainer
                     else MaterialTheme.colorScheme.errorContainer,
                 ),
             ) {
-                Text(it, modifier = Modifier.padding(14.dp), style = MaterialTheme.typography.bodyLarge)
+                Row(modifier = Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        if (feedbackIsPositive) "🌟" else "💪",
+                        fontSize = 26.sp,
+                        modifier = Modifier.padding(end = 10.dp),
+                    )
+                    Text(feedback.orEmpty(), style = MaterialTheme.typography.bodyLarge)
+                }
             }
         }
 
@@ -93,7 +118,7 @@ fun ActivityScaffold(
                     OutlinedButton(
                         onClick = { hintShown = true },
                         modifier = Modifier.sizeIn(minHeight = 52.dp),
-                    ) { Text("Hint") }
+                    ) { Text("💡 Hint") }
                 }
                 Button(
                     enabled = checkEnabled,
@@ -102,6 +127,10 @@ fun ActivityScaffold(
                         val correct = score()
                         feedbackIsPositive = correct
                         feedback = if (correct) activity.correctFeedback else activity.incorrectFeedback
+                        haptic.performHapticFeedback(
+                            if (correct) HapticFeedbackType.LongPress
+                            else HapticFeedbackType.TextHandleMove,
+                        )
                         if (correct) {
                             solved = true
                             onAnswered(
@@ -117,8 +146,8 @@ fun ActivityScaffold(
                             onIncorrectAttempt()
                         }
                     },
-                    modifier = Modifier.sizeIn(minHeight = 52.dp),
-                ) { Text("Check") }
+                    modifier = Modifier.sizeIn(minHeight = 52.dp).weight(1f),
+                ) { Text("Check ✓", style = MaterialTheme.typography.titleMedium) }
             }
         }
         Spacer(Modifier.height(4.dp))

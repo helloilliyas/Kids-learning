@@ -57,6 +57,7 @@ data class Grounding(
 data class Option(
     val id: String,
     val text: String,
+    val emoji: String? = null,
 )
 
 /**
@@ -70,6 +71,7 @@ sealed interface Section {
     val id: String
     val conceptId: String?
     val difficultyLevel: Int?
+    val emoji: String?
     val grounding: Grounding?
 }
 
@@ -79,6 +81,7 @@ data class ExplanationSection(
     override val id: String,
     @SerialName("concept_id") override val conceptId: String? = null,
     @SerialName("difficulty_level") override val difficultyLevel: Int? = null,
+    override val emoji: String? = null,
     override val grounding: Grounding? = null,
     val title: String,
     val content: String,
@@ -100,6 +103,7 @@ data class MultipleChoiceSection(
     override val id: String,
     @SerialName("concept_id") override val conceptId: String? = null,
     @SerialName("difficulty_level") override val difficultyLevel: Int? = null,
+    override val emoji: String? = null,
     override val grounding: Grounding? = null,
     val question: String,
     @SerialName("selection_mode") val selectionMode: String, // single | multiple
@@ -116,6 +120,7 @@ data class TrueFalseSection(
     override val id: String,
     @SerialName("concept_id") override val conceptId: String? = null,
     @SerialName("difficulty_level") override val difficultyLevel: Int? = null,
+    override val emoji: String? = null,
     override val grounding: Grounding? = null,
     val statement: String,
     @SerialName("correct_answer") val correctAnswer: Boolean,
@@ -130,6 +135,7 @@ data class FillInTheBlankSection(
     override val id: String,
     @SerialName("concept_id") override val conceptId: String? = null,
     @SerialName("difficulty_level") override val difficultyLevel: Int? = null,
+    override val emoji: String? = null,
     override val grounding: Grounding? = null,
     val template: String,
     val blanks: List<Blank>,
@@ -152,6 +158,7 @@ data class MatchPairsSection(
     override val id: String,
     @SerialName("concept_id") override val conceptId: String? = null,
     @SerialName("difficulty_level") override val difficultyLevel: Int? = null,
+    override val emoji: String? = null,
     override val grounding: Grounding? = null,
     val instruction: String,
     val pairs: List<Pair>,
@@ -169,6 +176,7 @@ data class DragIntoOrderSection(
     override val id: String,
     @SerialName("concept_id") override val conceptId: String? = null,
     @SerialName("difficulty_level") override val difficultyLevel: Int? = null,
+    override val emoji: String? = null,
     override val grounding: Grounding? = null,
     val instruction: String,
     val items: List<Option>,

@@ -1,27 +1,21 @@
 package com.kidslearning.app.ui.renderers
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.sizeIn
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.kidslearning.app.domain.model.AnswerResult
 import com.kidslearning.app.domain.model.LocalScoring
 import com.kidslearning.app.domain.model.MultipleChoiceSection
+import androidx.compose.ui.unit.dp
 
 /**
  * Single- and multi-select choice questions. The mode comes from the data
- * (selection_mode), not a separate component. Options are large tap targets.
+ * (selection_mode), not a separate component. Each option is a colourful
+ * OptionCard with its emoji picture.
  */
 @Composable
 fun MultipleChoiceActivity(
@@ -43,9 +37,13 @@ fun MultipleChoiceActivity(
         score = { LocalScoring.scoreMultipleChoice(section, selected.toSet()) },
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            section.options.forEach { option ->
+            section.options.forEachIndexed { index, option ->
                 val isSelected = option.id in selected
-                Card(
+                OptionCard(
+                    text = option.text,
+                    emoji = option.emoji,
+                    index = index,
+                    selected = isSelected,
                     onClick = {
                         if (multiple) {
                             if (isSelected) selected.remove(option.id) else selected.add(option.id)
@@ -54,24 +52,12 @@ fun MultipleChoiceActivity(
                             selected.add(option.id)
                         }
                     },
-                    colors = CardDefaults.cardColors(
-                        containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer
-                        else MaterialTheme.colorScheme.surfaceVariant,
-                    ),
-                    border = if (isSelected) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
-                    modifier = Modifier.fillMaxWidth().sizeIn(minHeight = 56.dp),
-                ) {
-                    Text(
-                        option.text,
-                        modifier = Modifier.padding(16.dp),
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                }
+                )
             }
             if (multiple) {
                 Text(
-                    "Choose all the right answers.",
-                    style = MaterialTheme.typography.labelMedium,
+                    "👆 Choose all the right answers.",
+                    style = MaterialTheme.typography.labelLarge,
                 )
             }
         }

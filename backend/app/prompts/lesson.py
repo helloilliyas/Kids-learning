@@ -37,6 +37,10 @@ Quality rules you must follow:
 - correct_feedback should briefly reinforce *why* the answer is right.
 - Every question must have a hint that nudges without giving away the answer.
 - Do not repeat questions. Each activity must test something distinct.
+- Give every section a relevant "emoji" (e.g. ☀️ for evaporation) and add an
+  "emoji" to options where a picture helps (especially for young children). The
+  emoji is the visual for that content. NEVER use an emoji that reveals the
+  answer (no numbered emojis on ordering items, no ✓/✗ hints on options).
 """
 
 

@@ -116,6 +116,11 @@
           "maximum": 5,
           "description": "Position on the lesson's difficulty progression. Extensions continue from the highest level the child has mastered."
         },
+        "emoji": {
+          "type": "string",
+          "maxLength": 16,
+          "description": "Optional emoji displayed large above this section -- the offline visual anchor for the concept (e.g. ☀️ for evaporation)."
+        },
         "grounding": { "$ref": "#/$defs/grounding" }
       }
     },
@@ -139,7 +144,12 @@
       "required": ["id", "text"],
       "properties": {
         "id": { "$ref": "#/$defs/id" },
-        "text": { "type": "string", "minLength": 1, "maxLength": 120 }
+        "text": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "emoji": {
+          "type": "string",
+          "maxLength": 16,
+          "description": "Optional emoji shown large next to the option text -- the offline 'picture' for this choice."
+        }
       }
     },
     "section": {
