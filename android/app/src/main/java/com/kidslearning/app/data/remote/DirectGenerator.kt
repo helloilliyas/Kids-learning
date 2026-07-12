@@ -52,10 +52,15 @@ class DirectGenerator(apiKey: String, private val context: Context) {
         )
 
         // Stage 2: turn the plan into a full lesson conforming to the shared schema.
+        val imageIndexNote = if (images.isEmpty()) "" else
+            "\n\nThere are ${images.size} attached image(s), numbered 0 to ${images.size - 1} " +
+                "in the order attached. Sections about a graph, chart, table, or picture " +
+                "visible in one of them MUST set image_ref to that number."
         val rawLesson = client.generateStructured(
             model = AnthropicClient.MODEL_STRONG,
             system = LESSON_SYSTEM,
-            prompt = lessonPrompt(plan.toString(), topic, subject, age, objective, numQuestions, language),
+            prompt = lessonPrompt(plan.toString(), topic, subject, age, objective, numQuestions, language) +
+                imageIndexNote,
             schema = lessonSchema(),
             images = images,
             maxTokens = 16384,
@@ -299,9 +304,14 @@ class DirectGenerator(apiKey: String, private val context: Context) {
               bare "try again". correct_feedback briefly reinforces WHY.
             - Every question needs a hint that nudges without revealing the answer.
             - No duplicate questions; each activity tests something distinct.
-            - Uploaded images ARE the source material: read them fully. When a
-              section teaches from a specific image, set image_ref to its 0-based
-              index. Only reference images actually provided; never invent one.
+            - Uploaded images ARE the source material: read them fully.
+            - CRITICAL image rule: when a section teaches from or asks about a
+              graph, pictograph, chart, table, diagram, or picture that appears
+              in an uploaded image, you MUST set that section's image_ref to the
+              image's 0-based index — the child has to SEE it to answer. Use
+              image_description ONLY for things NOT visible in any uploaded
+              image, and never set both on the same section. Only reference
+              images actually provided; never invent an index.
             - Give every section a relevant emoji, and options an emoji where a
               picture helps young children. NEVER use an emoji that reveals the
               answer (no numbers on ordering items, no check marks on options).

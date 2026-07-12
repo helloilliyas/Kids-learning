@@ -64,18 +64,25 @@ fun ExplanationCard(
 
         SectionImage(section.imageRef)
 
-        section.imageDescription?.let { description ->
-            Card(
-                colors = CardDefaults.cardColors(containerColor = Workbook.Pink),
-                border = BorderStroke(1.5.dp, Workbook.PinkBorder),
-                shape = MaterialTheme.shapes.small,
-            ) {
-                Row(
-                    modifier = Modifier.padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+        // Text-only picture prompt, shown ONLY when no real image is attached --
+        // with an image it would just read like a broken picture.
+        if (section.imageRef == null) {
+            section.imageDescription?.let { description ->
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Workbook.Pink),
+                    border = BorderStroke(1.5.dp, Workbook.PinkBorder),
+                    shape = MaterialTheme.shapes.small,
                 ) {
-                    Text("🖼", fontSize = 18.sp, modifier = Modifier.padding(end = 10.dp))
-                    Text(description, style = MaterialTheme.typography.bodyMedium)
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text("🧠", fontSize = 18.sp, modifier = Modifier.padding(end = 10.dp))
+                        Text(
+                            "Picture this: $description",
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
                 }
             }
         }
