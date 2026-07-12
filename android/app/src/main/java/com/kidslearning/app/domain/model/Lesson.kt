@@ -1,5 +1,6 @@
 package com.kidslearning.app.domain.model
 
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonClassDiscriminator
@@ -62,6 +63,7 @@ data class Option(
  * Common fields shared by every section, plus the polymorphic discriminator.
  * kotlinx.serialization reads the "type" property to pick the concrete subtype.
  */
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 @JsonClassDiscriminator("type")
 sealed interface Section {

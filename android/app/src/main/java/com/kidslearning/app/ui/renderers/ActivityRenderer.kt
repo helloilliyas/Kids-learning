@@ -14,23 +14,24 @@ import com.kidslearning.app.domain.model.TrueFalseSection
  * Dispatches a [Section] to its native renderer. This is the heart of the
  * "AI generates data, not UI" design: the renderer library is fixed and reusable,
  * and any valid lesson JSON drives it. Adding a new activity type means adding one
- * branch here and one composable -- never a change to lesson content or the model.
+ * branch here and one composable -- never a change to the app for new content.
  *
- * Every activity renderer reports completion through [onAnswered] with the
- * standardized [AnswerResult], so the lesson player is agnostic to activity type.
+ * Every activity reports completion through [onAnswered] with the standardized
+ * [AnswerResult], so the lesson player is agnostic to activity type.
  */
 @Composable
 fun RenderSection(
     section: Section,
     readAloud: Boolean,
+    speak: (String) -> Unit,
     onAnswered: (AnswerResult) -> Unit,
 ) {
     when (section) {
-        is ExplanationSection -> ExplanationCard(section, readAloud)
-        is MultipleChoiceSection -> MultipleChoiceActivity(section, readAloud, onAnswered)
-        is TrueFalseSection -> TrueFalseActivity(section, readAloud, onAnswered)
-        is FillInTheBlankSection -> FillInTheBlankActivity(section, readAloud, onAnswered)
-        is MatchPairsSection -> MatchPairsActivity(section, readAloud, onAnswered)
-        is DragIntoOrderSection -> DragIntoOrderActivity(section, readAloud, onAnswered)
+        is ExplanationSection -> ExplanationCard(section, readAloud, speak)
+        is MultipleChoiceSection -> MultipleChoiceActivity(section, readAloud, speak, onAnswered)
+        is TrueFalseSection -> TrueFalseActivity(section, readAloud, speak, onAnswered)
+        is FillInTheBlankSection -> FillInTheBlankActivity(section, readAloud, speak, onAnswered)
+        is MatchPairsSection -> MatchPairsActivity(section, readAloud, speak, onAnswered)
+        is DragIntoOrderSection -> DragIntoOrderActivity(section, readAloud, speak, onAnswered)
     }
 }

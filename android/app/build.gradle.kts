@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.compose")
     id("org.jetbrains.kotlin.plugin.serialization")
     id("com.google.devtools.ksp")
 }
@@ -25,8 +26,10 @@ android {
         compose = true
         buildConfig = true
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.15"
+    sourceSets.getByName("main") {
+        // The example lessons are the shared contract fixtures; bundling the same
+        // files keeps a single source of truth between backend tests and the app.
+        assets.srcDir(rootProject.projectDir.resolve("../lesson-schema/examples"))
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
