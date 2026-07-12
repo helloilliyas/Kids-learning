@@ -29,10 +29,14 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,6 +58,7 @@ import com.kidslearning.app.data.local.SourceImages
 import com.kidslearning.app.data.remote.BackendClient
 import com.kidslearning.app.data.remote.DirectGenerator
 import com.kidslearning.app.domain.model.Lesson
+import com.kidslearning.app.ui.child.Tts
 import com.kidslearning.app.ui.theme.Workbook
 import kotlinx.coroutines.launch
 import java.io.File
@@ -69,6 +74,7 @@ import java.io.File
 @Composable
 fun ParentScreen(
     prefs: Prefs,
+    tts: Tts,
     onPreview: (Lesson, List<ByteArray>) -> Unit,
     onExit: () -> Unit,
 ) {
@@ -409,6 +415,8 @@ fun ParentScreen(
                     ) { Text("Save & test connection") }
                 }
             }
+
+            VoiceSettingsCard(prefs, tts)
         }
 
         Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp)) {
@@ -418,6 +426,108 @@ fun ParentScreen(
                     containerColor = Workbook.Coral, contentColor = Color.White),
                 modifier = Modifier.sizeIn(minHeight = 48.dp),
             ) { Text("← Back to lessons") }
+        }
+    }
+}
+
+private const val VOICE_SAMPLE = "Hi! I will read your lessons. Let's learn something fun!"
+
+/**
+ * Narrator settings: pick from the phone's offline voices (tap to hear a sample),
+ * set the speaking speed, and toggle sound effects. All free and on-device.
+ */
+@Composable
+private fun VoiceSettingsCard(prefs: Prefs, tts: Tts) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Workbook.CardWhite),
+        shape = MaterialTheme.shapes.large,
+    ) {
+        Column(
+            modifier = Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Text("Narrator voice & sounds", style = MaterialTheme.typography.titleMedium)
+            Text(
+                "Pick who reads the lessons aloud — tap a voice to hear it. " +
+                    "All voices are on your phone and work offline. Tip: installing " +
+                    "\"Speech Services by Google\" adds more natural voices.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Workbook.TextMuted,
+            )
+
+            var voices by remember { mutableStateOf(listOf<android.speech.tts.Voice>()) }
+            LaunchedEffect(Unit) { tts.whenReady { voices = tts.availableVoices() } }
+            var selectedVoice by remember { mutableStateOf(prefs.voiceName) }
+
+            if (voices.isEmpty()) {
+                Text(
+                    "Loading the voices on this phone…",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Workbook.TextMuted,
+                )
+            }
+            voices.take(10).forEachIndexed { index, voice ->
+                val isSelected = voice.name == selectedVoice
+                val quality = when {
+                    voice.quality >= 400 -> " · natural"
+                    else -> ""
+                }
+                Surface(
+                    onClick = {
+                        selectedVoice = voice.name
+                        prefs.voiceName = voice.name
+                        tts.applyVoice(voice.name)
+                        tts.speak(VOICE_SAMPLE)
+                    },
+                    color = if (isSelected) Workbook.GreenPill else Workbook.PageBackground,
+                    shape = MaterialTheme.shapes.small,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                    ) {
+                        Text(if (isSelected) "🔊" else "▶️", fontSize = 16.sp)
+                        Text(
+                            "Voice ${index + 1} · ${voice.locale.displayName}$quality",
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.weight(1f).padding(start = 10.dp),
+                        )
+                        if (isSelected) Text("✓", style = MaterialTheme.typography.titleMedium)
+                    }
+                }
+            }
+
+            Text("Speaking speed", style = MaterialTheme.typography.labelLarge)
+            var rate by remember { mutableFloatStateOf(prefs.speechRate) }
+            Slider(
+                value = rate,
+                onValueChange = { rate = it },
+                valueRange = 0.6f..1.3f,
+                onValueChangeFinished = {
+                    prefs.speechRate = rate
+                    tts.applyRate(rate)
+                    tts.speak(VOICE_SAMPLE)
+                },
+            )
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Text("🐢 Slower", style = MaterialTheme.typography.labelMedium, color = Workbook.TextMuted)
+                Box(modifier = Modifier.weight(1f))
+                Text("Faster 🐇", style = MaterialTheme.typography.labelMedium, color = Workbook.TextMuted)
+            }
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Sound effects", style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        "Pops, chimes, and story sounds",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Workbook.TextMuted,
+                    )
+                }
+                var fx by remember { mutableStateOf(prefs.soundEffects) }
+                Switch(checked = fx, onCheckedChange = { fx = it; prefs.soundEffects = it })
+            }
         }
     }
 }

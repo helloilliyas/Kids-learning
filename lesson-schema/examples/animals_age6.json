@@ -29,6 +29,35 @@
   "source_references": [],
   "sections": [
     {
+      "id": "story_intro",
+      "type": "animated_story",
+      "concept_id": "recognising_animals",
+      "difficulty_level": 1,
+      "emoji": "🎬",
+      "title": "A day with the animals",
+      "grounding": {
+        "basis": "general_knowledge"
+      },
+      "scenes": [
+        {
+          "text": "Good morning! The sun comes up over the farm.",
+          "emoji": "🌅"
+        },
+        {
+          "text": "The cow says moo. She lives on the farm.",
+          "emoji": "🐄"
+        },
+        {
+          "text": "Far away in the jungle, a lion wakes up. He is wild!",
+          "emoji": "🦁"
+        },
+        {
+          "text": "Farm or wild — every animal has a home. Let's meet them!",
+          "emoji": "🏡"
+        }
+      ]
+    },
+    {
       "id": "intro",
       "type": "explanation",
       "concept_id": "recognising_animals",

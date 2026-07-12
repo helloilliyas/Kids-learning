@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.kidslearning.app.domain.model.Activity
+import com.kidslearning.app.domain.model.AnimatedStorySection
 import com.kidslearning.app.domain.model.AnswerKey
 import com.kidslearning.app.domain.model.BuildBarChartSection
 import com.kidslearning.app.domain.model.ChartSection
@@ -127,6 +128,7 @@ fun PreviewScreen(
 
 private fun sectionKind(section: Section): String = when (section) {
     is ExplanationSection -> "Explanation"
+    is AnimatedStorySection -> "Animated story (${section.scenes.size} scenes)"
     is ChartSection -> if (section.chartType == "pictograph") "Pictograph" else "Bar chart"
     is BuildBarChartSection -> "Build a bar chart"
     is TapImageSection -> "Tap the picture"
@@ -142,6 +144,8 @@ private fun sectionKind(section: Section): String = when (section) {
 
 private fun sectionText(section: Section): String = when (section) {
     is ExplanationSection -> "${section.title} — ${section.content}"
+    is AnimatedStorySection -> section.title + ": " +
+        section.scenes.joinToString(" ▸ ") { "${it.emoji ?: ""} ${it.text}".trim() }
     is ChartSection -> section.title + ": " +
         section.items.joinToString { "${it.label} ${it.value}" }
     else -> AnswerKey.questionText(section).orEmpty()

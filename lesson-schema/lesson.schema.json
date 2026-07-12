@@ -264,6 +264,9 @@
           "$ref": "#/$defs/explanation"
         },
         {
+          "$ref": "#/$defs/animatedStory"
+        },
+        {
           "$ref": "#/$defs/chart"
         },
         {
@@ -466,6 +469,64 @@
           "type": "string",
           "maxLength": 300,
           "description": "Optional description of an illustration for this card. V1 renders it as a caption placeholder; later versions may generate or fetch an image."
+        }
+      }
+    },
+    "animatedStory": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/sectionBase"
+        }
+      ],
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": [
+        "title",
+        "scenes"
+      ],
+      "description": "An auto-playing animated intro: a sequence of short narrated scenes the app plays with animations, voice narration, and sound effects. Every lesson should OPEN with one, telling the concept as a tiny story before any questions.",
+      "properties": {
+        "type": {
+          "const": "animated_story"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "scenes": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 8,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "text"
+            ],
+            "properties": {
+              "text": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200,
+                "description": "One or two short sentences, narrated aloud while the scene shows."
+              },
+              "emoji": {
+                "type": "string",
+                "maxLength": 16,
+                "description": "Big animated emoji for this scene (the visual when there is no photo)."
+              },
+              "image_ref": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "image_search": {
+                "type": "string",
+                "maxLength": 60,
+                "description": "Wikipedia article title to fetch a real photo for this scene."
+              }
+            }
+          }
         }
       }
     },

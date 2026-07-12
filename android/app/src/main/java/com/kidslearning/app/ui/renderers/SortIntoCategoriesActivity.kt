@@ -27,13 +27,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kidslearning.app.domain.model.AnswerResult
 import com.kidslearning.app.domain.model.SortIntoCategoriesSection
+import com.kidslearning.app.ui.LocalSounds
+import com.kidslearning.app.ui.Sounds
 import com.kidslearning.app.ui.theme.OptionPalette
 import com.kidslearning.app.ui.theme.Workbook
 
 /**
- * Sort items into labelled buckets. Tap an item to pick it up, then tap a category
- * to drop it there (simpler and more reliable for small fingers than free drag).
- * Placed items move under their bucket; tapping a placed item returns it.
+ * Sort items into labelled buckets by dragging them in with a finger (or the tap
+ * fallback: tap an item, then tap a box). Placed items move under their bucket;
+ * tapping a placed item returns it to the tray.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -47,6 +49,8 @@ fun SortIntoCategoriesActivity(
     // itemId -> categoryId (absent = still in the tray)
     val placement = remember(section.id) { mutableStateMapOf<String, String>() }
     var picked by remember(section.id) { mutableStateOf<String?>(null) }
+    val dragState = rememberDragDropState(section.id)
+    val sounds = LocalSounds.current
 
     ActivityScaffold(
         activity = section,
@@ -70,7 +74,8 @@ fun SortIntoCategoriesActivity(
         // The tray of items still to sort.
         if (unplaced.isNotEmpty()) {
             Text(
-                if (picked == null) "👆 Tap an item, then tap its box" else "👇 Now tap a box",
+                if (picked == null) "🖐 Drag each item into its box (or tap it, then tap a box)"
+                else "👇 Now tap a box",
                 style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier.padding(bottom = 4.dp),
             )
@@ -91,7 +96,19 @@ fun SortIntoCategoriesActivity(
                         border = if (isPicked)
                             BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
                         modifier = Modifier.sizeIn(minHeight = 44.dp)
-                            .graphicsLayer { scaleX = scale; scaleY = scale },
+                            .graphicsLayer { scaleX = scale; scaleY = scale }
+                            .dragSource(
+                                state = dragState,
+                                id = item.id,
+                                onPickUp = { sounds(Sounds.Effect.POP) },
+                                onDrop = { target ->
+                                    if (target != null) {
+                                        placement[item.id] = target
+                                        picked = null
+                                        sounds(Sounds.Effect.POP)
+                                    }
+                                },
+                            ),
                     ) {
                         Text(
                             "${item.emoji ?: ""} ${item.text}".trim(),
@@ -108,17 +125,20 @@ fun SortIntoCategoriesActivity(
             section.categories.forEachIndexed { index, category ->
                 val (container, accent) = OptionPalette[(index + 2) % OptionPalette.size]
                 val placedHere = section.items.filter { placement[it.id] == category.id }
+                val isDropHover = dragState.draggingId != null
                 Card(
                     onClick = {
                         val p = picked
                         if (p != null) {
                             placement[p] = category.id
                             picked = null
+                            sounds(Sounds.Effect.POP)
                         }
                     },
                     colors = CardDefaults.cardColors(containerColor = container),
-                    border = BorderStroke(2.dp, accent.copy(alpha = 0.4f)),
-                    modifier = Modifier.weight(1f).sizeIn(minHeight = 110.dp),
+                    border = BorderStroke(2.dp, accent.copy(alpha = if (isDropHover) 0.9f else 0.4f)),
+                    modifier = Modifier.weight(1f).sizeIn(minHeight = 110.dp)
+                        .dropTarget(dragState, category.id),
                 ) {
                     Column(modifier = Modifier.padding(10.dp)) {
                         Text(

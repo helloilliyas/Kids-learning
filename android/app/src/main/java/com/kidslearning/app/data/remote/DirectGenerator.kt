@@ -76,9 +76,9 @@ class DirectGenerator(apiKey: String, private val context: Context) {
             subject = base.subject,
             age = base.age,
             objective = "Focused practice on: ${weakNames.joinToString(", ")}. " +
-                "Make every question $difficultyNote. Start with ONE very short " +
-                "encouraging recap explanation, then go straight into activities. " +
-                "Never repeat a question from the ALREADY ASKED list.",
+                "Make every question $difficultyNote. Open with ONE very short " +
+                "animated_story recap (2-3 scenes), then go straight into " +
+                "activities. Never repeat a question from the ALREADY ASKED list.",
             sourceText = "WHAT WAS TAUGHT:\n$taught\n\nQUESTIONS ALREADY ASKED " +
                 "(write different ones):\n$alreadyAsked",
             uploadedImages = emptyList(),
@@ -201,6 +201,10 @@ class DirectGenerator(apiKey: String, private val context: Context) {
                 (opt.jsonObject["image_search"] as? JsonPrimitive)?.content
                     ?.takeIf { it.isNotBlank() }?.let { terms.add(it) }
             }
+            (section["scenes"] as? JsonArray)?.forEach { scene ->
+                (scene.jsonObject["image_search"] as? JsonPrimitive)?.content
+                    ?.takeIf { it.isNotBlank() }?.let { terms.add(it) }
+            }
         }
         return terms.toList()
     }
@@ -213,8 +217,8 @@ class DirectGenerator(apiKey: String, private val context: Context) {
                         val idx = (value as? JsonPrimitive)?.content?.let { fetched[it] }
                         if (idx != null) put("image_ref", JsonPrimitive(idx)) else put(key, value)
                     }
-                    key == "options" && value is JsonArray -> {
-                        putJsonArray("options") {
+                    (key == "options" || key == "scenes") && value is JsonArray -> {
+                        putJsonArray(key) {
                             value.forEach { opt ->
                                 val o = opt.jsonObject
                                 add(buildJsonObject {
@@ -411,13 +415,19 @@ class DirectGenerator(apiKey: String, private val context: Context) {
 
         ${ageRules(age)}
 
-        Structure the lesson as: a short introduction, then alternating explanation
-        cards and activities building from difficulty_level 1 upward, ending with a
+        OPEN the lesson with ONE "animated_story" section: 3-6 short scenes that
+        tell the core idea as a tiny story the app plays with animation, narration,
+        and sounds. Each scene is one or two short sentences plus a visual (a big
+        emoji, an image_search photo, or an uploaded image_ref). Make it warm and
+        concrete — meet a character, watch something happen — not a list of facts.
+
+        After the story, structure the lesson as: alternating explanation cards
+        and activities building from difficulty_level 1 upward, ending with a
         challenge activity and a warm completion_message. Use only these section
-        types: explanation, chart, multiple_choice, true_false, fill_in_the_blank,
-        match_pairs, drag_into_order, build_bar_chart, tap_image,
-        sort_into_categories, number_line. Vary the activity types so the lesson
-        stays fresh. Give every section a unique snake_case id.
+        types: animated_story, explanation, chart, multiple_choice, true_false,
+        fill_in_the_blank, match_pairs, drag_into_order, build_bar_chart,
+        tap_image, sort_into_categories, number_line. Vary the activity types so
+        the lesson stays fresh. Give every section a unique snake_case id.
         Every activity must reference a concept_id declared in the concepts list.
 
         TEACHING PLAN:

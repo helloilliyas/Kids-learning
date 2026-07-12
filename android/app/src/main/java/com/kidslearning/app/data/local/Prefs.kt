@@ -25,4 +25,18 @@ class Prefs(context: Context) {
     var anthropicKey: String
         get() = prefs.getString("anthropic_key", "").orEmpty()
         set(value) = prefs.edit().putString("anthropic_key", value.trim()).apply()
+
+    /** Engine-specific name of the chosen narrator voice; empty = device default. */
+    var voiceName: String
+        get() = prefs.getString("voice_name", "").orEmpty()
+        set(value) = prefs.edit().putString("voice_name", value).apply()
+
+    /** Narration speed multiplier; kids often benefit from slightly under 1.0. */
+    var speechRate: Float
+        get() = prefs.getFloat("speech_rate", 1.0f)
+        set(value) = prefs.edit().putFloat("speech_rate", value).apply()
+
+    var soundEffects: Boolean
+        get() = prefs.getBoolean("sound_effects", true)
+        set(value) = prefs.edit().putBoolean("sound_effects", value).apply()
 }

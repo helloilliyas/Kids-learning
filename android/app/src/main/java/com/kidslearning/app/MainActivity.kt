@@ -62,6 +62,8 @@ import com.kidslearning.app.ui.child.Tts
 import com.kidslearning.app.ui.parent.ParentGate
 import com.kidslearning.app.ui.parent.ParentScreen
 import com.kidslearning.app.ui.parent.PreviewScreen
+import com.kidslearning.app.ui.LocalSounds
+import com.kidslearning.app.ui.Sounds
 import com.kidslearning.app.ui.renderers.LocalLessonImageResolver
 import com.kidslearning.app.ui.theme.KidsTheme
 import com.kidslearning.app.ui.theme.Workbook
@@ -127,8 +129,14 @@ private fun App() {
 
     var screen by remember { mutableStateOf<Screen>(Screen.Home) }
 
-    val tts = remember { Tts(context, "en") }
-    DisposableEffect(Unit) { onDispose { tts.shutdown() } }
+    val tts = remember { Tts(context, "en", prefs.voiceName, prefs.speechRate) }
+    val sounds = remember { Sounds(context) }
+    DisposableEffect(Unit) {
+        onDispose {
+            tts.shutdown()
+            sounds.release()
+        }
+    }
 
     fun persistResult(lesson: Lesson, result: AnswerResult) {
         scope.launch(Dispatchers.IO) {
@@ -163,6 +171,9 @@ private fun App() {
         }
     }
 
+    CompositionLocalProvider(
+        LocalSounds provides { effect -> if (prefs.soundEffects) sounds.play(effect) }
+    ) {
     when (val current = screen) {
         is Screen.Home -> HomeScreen(
             lessons = lessons,
@@ -232,6 +243,7 @@ private fun App() {
 
         is Screen.Parent -> ParentScreen(
             prefs = prefs,
+            tts = tts,
             onPreview = { lesson, images -> screen = Screen.Preview(lesson, images) },
             onExit = { screen = Screen.Home },
         )
@@ -261,6 +273,7 @@ private fun App() {
             },
             onDiscard = { screen = Screen.Parent },
         )
+    }
     }
 }
 

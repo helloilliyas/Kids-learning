@@ -26,6 +26,7 @@ from app.validators.age_profiles import AgeProfile, profile_for_age
 # rejected before it can reach a child's screen.
 SUPPORTED_TYPES = {
     "explanation",
+    "animated_story",
     "chart",
     "multiple_choice",
     "true_false",
@@ -39,7 +40,7 @@ SUPPORTED_TYPES = {
 }
 
 # Display-only sections teach; everything else is answered and scored.
-ACTIVITY_TYPES = SUPPORTED_TYPES - {"explanation", "chart"}
+ACTIVITY_TYPES = SUPPORTED_TYPES - {"explanation", "animated_story", "chart"}
 
 _BLANK_MARKER = re.compile(r"\{\{([a-z0-9][a-z0-9_-]{0,63})\}\}")
 
@@ -128,6 +129,8 @@ def validate_lesson(lesson: dict) -> ValidationResult:
             _check_sort(section, result)
         elif stype == "number_line":
             _check_number_line(section, result)
+        elif stype == "animated_story":
+            _check_animated_story(section, result)
 
         _check_duplicate(section, seen_questions, result)
 
@@ -400,9 +403,20 @@ def _check_number_line(section: dict, result: ValidationResult) -> None:
         result.add("too_many_steps", "Number line has over 100 positions; too fiddly.", sid)
 
 
+def _check_animated_story(section: dict, result: ValidationResult) -> None:
+    sid = section.get("id")
+    for i, scene in enumerate(section.get("scenes", [])):
+        if not (scene.get("emoji") or scene.get("image_ref") is not None or scene.get("image_search")):
+            result.add(
+                "scene_no_visual",
+                f"Scene {i + 1} needs an emoji, image_ref, or image_search — every scene shows something.",
+                sid,
+            )
+
+
 def _check_duplicate(section: dict, seen: dict[str, str], result: ValidationResult) -> None:
     text = _question_text(section)
-    if section.get("type") in ("explanation", "chart") or not text:
+    if section.get("type") in ("explanation", "animated_story", "chart") or not text:
         return
     norm = _normalise_question(text)
     if not norm:

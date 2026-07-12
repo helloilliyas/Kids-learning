@@ -151,11 +151,18 @@ Aim for about {num_questions} interactive activities.
 
 {_age_rules(profile, age)}
 
-Structure the lesson as: a short introduction, then alternating explanation cards
-and activities that build from difficulty_level 1 upward, ending with a challenge
+OPEN the lesson with ONE "animated_story" section: 3-6 short scenes that tell the
+core idea as a tiny story the app plays with animation, narration, and sounds.
+Each scene is one or two short sentences plus a visual (a big emoji, an
+image_search photo, or an uploaded image_ref). Make it warm and concrete — meet a
+character, watch something happen — not a list of facts.
+
+After the story, structure the lesson as: alternating explanation cards and
+activities that build from difficulty_level 1 upward, ending with a challenge
 activity and a warm completion_message. Use only these section types:
-explanation, chart, multiple_choice, true_false, fill_in_the_blank, match_pairs,
-drag_into_order, build_bar_chart, tap_image, sort_into_categories, number_line.
+animated_story, explanation, chart, multiple_choice, true_false,
+fill_in_the_blank, match_pairs, drag_into_order, build_bar_chart, tap_image,
+sort_into_categories, number_line.
 Vary the activity types so the lesson stays fresh. Give every section a unique
 snake_case id.
 Every activity must reference a concept_id declared in the concepts list.

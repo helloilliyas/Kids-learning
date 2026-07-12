@@ -116,6 +116,15 @@ object LessonChecks {
                         }
                     }
                 }
+                is AnimatedStorySection -> {
+                    section.scenes.forEachIndexed { i, scene ->
+                        scene.imageRef?.let {
+                            if (it !in 0 until imageCount) {
+                                errors += "[$sid] scene ${i + 1} image_ref $it out of range."
+                            }
+                        }
+                    }
+                }
                 is ExplanationSection -> Unit
             }
 
@@ -131,6 +140,7 @@ object LessonChecks {
                 is NumberLineSection -> section.question
                 is ChartSection -> null
                 is ExplanationSection -> null
+                is AnimatedStorySection -> null
             }?.lowercase()?.replace(Regex("[^a-z0-9 ]"), "")?.trim()
             if (!questionText.isNullOrBlank() && !seenQuestions.add(questionText)) {
                 errors += "[$sid] duplicate question."

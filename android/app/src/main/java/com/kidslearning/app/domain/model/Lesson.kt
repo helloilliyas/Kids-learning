@@ -92,6 +92,28 @@ data class ExplanationSection(
     @SerialName("image_description") val imageDescription: String? = null,
 ) : Section
 
+@Serializable
+@SerialName("animated_story")
+data class AnimatedStorySection(
+    override val id: String,
+    @SerialName("concept_id") override val conceptId: String? = null,
+    @SerialName("difficulty_level") override val difficultyLevel: Int? = null,
+    override val emoji: String? = null,
+    @SerialName("image_ref") override val imageRef: Int? = null,
+    @SerialName("image_search") override val imageSearch: String? = null,
+    override val grounding: Grounding? = null,
+    val title: String,
+    val scenes: List<Scene>,
+) : Section {
+    @Serializable
+    data class Scene(
+        val text: String,
+        val emoji: String? = null,
+        @SerialName("image_ref") val imageRef: Int? = null,
+        @SerialName("image_search") val imageSearch: String? = null,
+    )
+}
+
 /**
  * Fields every interactive activity carries: the feedback the child sees.
  */

@@ -9,6 +9,7 @@ object AnswerKey {
 
     fun questionText(section: Section): String? = when (section) {
         is ExplanationSection -> null
+        is AnimatedStorySection -> null
         is ChartSection -> null
         is BuildBarChartSection -> section.instruction
         is TapImageSection -> section.question
@@ -41,5 +42,6 @@ object AnswerKey {
         is NumberLineSection -> "${section.correctValue}${section.unit?.let { " $it" } ?: ""}"
         is ChartSection -> null
         is ExplanationSection -> null
+        is AnimatedStorySection -> null
     }
 }

@@ -35,6 +35,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kidslearning.app.domain.model.Activity
 import com.kidslearning.app.domain.model.AnswerResult
+import com.kidslearning.app.ui.LocalSounds
+import com.kidslearning.app.ui.Sounds
 import com.kidslearning.app.ui.theme.Workbook
 
 /**
@@ -65,6 +67,7 @@ fun ActivityScaffold(
     var feedback by remember(activity.id) { mutableStateOf<String?>(null) }
     var feedbackIsPositive by remember(activity.id) { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
+    val sounds = LocalSounds.current
 
     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
         QuestionBadge(number = number, solved = solved)
@@ -123,6 +126,7 @@ fun ActivityScaffold(
                                 if (correct) HapticFeedbackType.LongPress
                                 else HapticFeedbackType.TextHandleMove,
                             )
+                            sounds(if (correct) Sounds.Effect.CHIME else Sounds.Effect.OOPS)
                             if (correct) {
                                 solved = true
                                 onAnswered(

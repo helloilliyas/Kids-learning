@@ -31,6 +31,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
@@ -44,6 +45,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kidslearning.app.domain.model.Activity
+import com.kidslearning.app.domain.model.AnimatedStorySection
 import com.kidslearning.app.domain.model.AnswerKey
 import com.kidslearning.app.domain.model.AnswerResult
 import com.kidslearning.app.domain.model.ConceptMastery
@@ -51,6 +53,8 @@ import com.kidslearning.app.domain.model.ExplanationSection
 import com.kidslearning.app.domain.model.Lesson
 import com.kidslearning.app.domain.model.MasteryEngine
 import com.kidslearning.app.domain.model.Section
+import com.kidslearning.app.ui.LocalSounds
+import com.kidslearning.app.ui.Sounds
 import com.kidslearning.app.ui.renderers.RenderSection
 import com.kidslearning.app.ui.theme.Workbook
 import com.kidslearning.app.ui.theme.subjectEmoji
@@ -239,11 +243,11 @@ fun LessonPlayerScreen(
     }
 }
 
-/** Every explanation starts a new page; following activities join that page. */
+/** Every explanation or story starts a new page; following activities join it. */
 private fun buildPages(sections: List<Section>): List<List<Section>> {
     val pages = mutableListOf<MutableList<Section>>()
     sections.forEach { section ->
-        if (section is ExplanationSection || pages.isEmpty()) {
+        if (section is ExplanationSection || section is AnimatedStorySection || pages.isEmpty()) {
             pages.add(mutableListOf(section))
         } else {
             pages.last().add(section)
@@ -253,9 +257,11 @@ private fun buildPages(sections: List<Section>): List<List<Section>> {
 }
 
 private fun pageLabel(page: List<Section>, index: Int): String {
-    val title = (page.firstOrNull() as? ExplanationSection)?.title
-        ?.trimEnd('?', '!', '.')
-        ?: return "Part ${index + 1}"
+    val title = when (val first = page.firstOrNull()) {
+        is ExplanationSection -> first.title
+        is AnimatedStorySection -> first.title
+        else -> null
+    }?.trimEnd('?', '!', '.') ?: return "Part ${index + 1}"
     return if (title.length <= 16) title else title.take(15).trimEnd() + "…"
 }
 
@@ -356,6 +362,8 @@ private fun CompletionScreen(
 ) {
     val firstTry = results.count { it.attempts == 1 && !it.usedHint }
     val total = results.size + skipped.size
+    val sounds = LocalSounds.current
+    LaunchedEffect(Unit) { if (skipped.isEmpty()) sounds(Sounds.Effect.TADA) }
     Box(modifier = Modifier.fillMaxSize().background(Workbook.PageBackground)) {
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),

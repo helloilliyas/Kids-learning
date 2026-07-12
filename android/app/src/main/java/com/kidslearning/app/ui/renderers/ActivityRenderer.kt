@@ -1,6 +1,7 @@
 package com.kidslearning.app.ui.renderers
 
 import androidx.compose.runtime.Composable
+import com.kidslearning.app.domain.model.AnimatedStorySection
 import com.kidslearning.app.domain.model.AnswerResult
 import com.kidslearning.app.domain.model.BuildBarChartSection
 import com.kidslearning.app.domain.model.ChartSection
@@ -34,6 +35,7 @@ fun RenderSection(
 ) {
     when (section) {
         is ExplanationSection -> ExplanationCard(section, readAloud, speak)
+        is AnimatedStorySection -> AnimatedStoryView(section, speak)
         is ChartSection -> ChartView(section, readAloud, speak)
         is BuildBarChartSection -> BuildBarChartActivity(section, number, readAloud, speak, onAnswered)
         is MultipleChoiceSection -> MultipleChoiceActivity(section, number, readAloud, speak, onAnswered)
