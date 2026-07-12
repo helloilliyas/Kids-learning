@@ -16,4 +16,13 @@ class Prefs(context: Context) {
     var appToken: String
         get() = prefs.getString("app_token", "").orEmpty()
         set(value) = prefs.edit().putString("app_token", value.trim()).apply()
+
+    /**
+     * Anthropic API key for on-device generation (personal-use mode). Entered by
+     * the parent at runtime and kept in the app's private storage -- it is never
+     * compiled into the APK and never leaves the device except to call the API.
+     */
+    var anthropicKey: String
+        get() = prefs.getString("anthropic_key", "").orEmpty()
+        set(value) = prefs.edit().putString("anthropic_key", value.trim()).apply()
 }

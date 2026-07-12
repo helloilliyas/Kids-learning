@@ -30,6 +30,9 @@ android {
         // The example lessons are the shared contract fixtures; bundling the same
         // files keeps a single source of truth between backend tests and the app.
         assets.srcDir(rootProject.projectDir.resolve("../lesson-schema/examples"))
+        // The schema itself is bundled too: on-device generation sends it to the
+        // API as the structured-output contract (lands at assets/lesson.schema.json).
+        assets.srcDir(rootProject.projectDir.resolve("../lesson-schema"))
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

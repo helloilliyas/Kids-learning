@@ -44,11 +44,13 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kidslearning.app.data.local.Prefs
 import com.kidslearning.app.data.local.SourceImages
 import com.kidslearning.app.data.remote.BackendClient
+import com.kidslearning.app.data.remote.DirectGenerator
 import com.kidslearning.app.domain.model.Lesson
 import com.kidslearning.app.ui.theme.Workbook
 import kotlinx.coroutines.launch
@@ -79,6 +81,7 @@ fun ParentScreen(
 
     var backendUrl by remember { mutableStateOf(prefs.backendUrl) }
     var appToken by remember { mutableStateOf(prefs.appToken) }
+    var apiKey by remember { mutableStateOf(prefs.anthropicKey) }
 
     var busy by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -250,32 +253,54 @@ fun ParentScreen(
                             && (age.toIntOrNull() ?: 0) in 3..18,
                         onClick = {
                             error = null
-                            if (backendUrl.isBlank()) {
-                                error = "Set the backend URL below first (see documentation/backend-setup.md)."
+                            if (apiKey.isBlank() && backendUrl.isBlank()) {
+                                error = "Add your API key (or a backend URL) in the settings below first."
                                 return@Button
                             }
                             busy = true
                             scope.launch {
                                 try {
-                                    val client = BackendClient(backendUrl, appToken)
-                                    val response = client.generateLesson(
-                                        BackendClient.GenerateRequest(
-                                            sourceText = sourceText,
+                                    if (apiKey.isNotBlank()) {
+                                        // Personal-use mode: generate on this phone.
+                                        val result = DirectGenerator(apiKey, context).generate(
                                             topic = topic.trim(),
-                                            age = age.toInt(),
                                             subject = subject.trim(),
+                                            age = age.toInt(),
                                             objective = objective.trim(),
-                                            sourceImages = images.map(SourceImages::toBase64),
+                                            sourceText = sourceText,
+                                            images = images.map(SourceImages::toBase64),
                                         )
-                                    )
-                                    val lesson = response.lesson
-                                    when {
-                                        response.ok && lesson != null -> onPreview(lesson, images.toList())
-                                        lesson != null ->
-                                            error = "The lesson failed validation: " +
-                                                (response.structuralErrors + response.semanticErrors)
-                                                    .take(3).joinToString("; ")
-                                        else -> error = "The backend returned no lesson."
+                                        val lesson = result.lesson
+                                        when {
+                                            lesson != null && result.errors.isEmpty() ->
+                                                onPreview(lesson, images.toList())
+                                            lesson != null ->
+                                                error = "The lesson failed checks: " +
+                                                    result.errors.take(3).joinToString("; ")
+                                            else -> error = result.errors.firstOrNull()
+                                                ?: "Generation returned nothing."
+                                        }
+                                    } else {
+                                        val client = BackendClient(backendUrl, appToken)
+                                        val response = client.generateLesson(
+                                            BackendClient.GenerateRequest(
+                                                sourceText = sourceText,
+                                                topic = topic.trim(),
+                                                age = age.toInt(),
+                                                subject = subject.trim(),
+                                                objective = objective.trim(),
+                                                sourceImages = images.map(SourceImages::toBase64),
+                                            )
+                                        )
+                                        val lesson = response.lesson
+                                        when {
+                                            response.ok && lesson != null -> onPreview(lesson, images.toList())
+                                            lesson != null ->
+                                                error = "The lesson failed validation: " +
+                                                    (response.structuralErrors + response.semanticErrors)
+                                                        .take(3).joinToString("; ")
+                                            else -> error = "The backend returned no lesson."
+                                        }
                                     }
                                 } catch (e: Exception) {
                                     error = "Could not generate: ${e.message?.take(200)}"
@@ -308,10 +333,33 @@ fun ParentScreen(
                     modifier = Modifier.padding(14.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
-                    Text("Backend connection", style = MaterialTheme.typography.titleMedium)
+                    Text("AI connection", style = MaterialTheme.typography.titleMedium)
                     Text(
-                        "Where lessons are generated. Your AI key stays on the backend; " +
-                            "it is never stored in this app.",
+                        "Personal-use mode: paste your Anthropic API key and lessons are " +
+                            "generated straight from this phone. The key is stored only in " +
+                            "this app's private storage on this device. Tip: set a monthly " +
+                            "spend limit at console.anthropic.com.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Workbook.TextMuted,
+                    )
+                    OutlinedTextField(
+                        value = apiKey, onValueChange = { apiKey = it },
+                        label = { Text("Anthropic API key (sk-ant-…)") },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Button(
+                        onClick = {
+                            prefs.anthropicKey = apiKey
+                            error = if (apiKey.isBlank()) "API key cleared."
+                            else "✓ Key saved on this device."
+                        },
+                        modifier = Modifier.sizeIn(minHeight = 44.dp),
+                    ) { Text("Save key") }
+
+                    Text(
+                        "Alternative: a private backend (leave the key empty to use it).",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Workbook.TextMuted,
                     )
