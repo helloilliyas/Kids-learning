@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.kidslearning.app.domain.model.Activity
+import com.kidslearning.app.domain.model.AnswerKey
 import com.kidslearning.app.domain.model.BuildBarChartSection
 import com.kidslearning.app.domain.model.ChartSection
 import com.kidslearning.app.domain.model.ExplanationSection
@@ -87,7 +88,7 @@ fun PreviewScreen(
                             color = Workbook.TextMuted,
                         )
                         Text(sectionText(section), style = MaterialTheme.typography.bodyLarge)
-                        answerSummary(section)?.let {
+                        AnswerKey.answerText(section)?.let {
                             Text(
                                 "Answer: $it",
                                 style = MaterialTheme.typography.bodyMedium,
@@ -143,34 +144,5 @@ private fun sectionText(section: Section): String = when (section) {
     is ExplanationSection -> "${section.title} — ${section.content}"
     is ChartSection -> section.title + ": " +
         section.items.joinToString { "${it.label} ${it.value}" }
-    is BuildBarChartSection -> section.instruction
-    is TapImageSection -> section.question
-    is SortIntoCategoriesSection -> section.instruction
-    is NumberLineSection -> section.question
-    is MultipleChoiceSection -> section.question
-    is TrueFalseSection -> section.statement
-    is FillInTheBlankSection -> section.template.replace(Regex("\\{\\{[^}]+\\}\\}"), "____")
-    is MatchPairsSection -> section.instruction
-    is DragIntoOrderSection -> section.instruction
-}
-
-private fun answerSummary(section: Section): String? = when (section) {
-    is MultipleChoiceSection -> section.options
-        .filter { it.id in section.correctAnswerIds }.joinToString { it.text }
-    is TrueFalseSection -> if (section.correctAnswer) "True" else "False"
-    is FillInTheBlankSection -> section.blanks.joinToString { it.acceptedAnswers.first() }
-    is MatchPairsSection -> section.pairs.joinToString { "${it.left.text} → ${it.right.text}" }
-    is DragIntoOrderSection -> {
-        val byId = section.items.associateBy { it.id }
-        section.correctOrder.mapNotNull { byId[it]?.text }.joinToString(" → ")
-    }
-    is BuildBarChartSection -> section.items.joinToString { "${it.label}: ${it.target}" }
-    is TapImageSection -> section.options.firstOrNull { it.id == section.correctOptionId }
-        ?.let { it.label ?: it.emoji ?: it.id }
-    is SortIntoCategoriesSection -> {
-        val cats = section.categories.associate { it.id to it.label }
-        section.items.joinToString { "${it.text}→${cats[it.categoryId] ?: it.categoryId}" }
-    }
-    is NumberLineSection -> "${section.correctValue}${section.unit?.let { " $it" } ?: ""}"
-    else -> null
+    else -> AnswerKey.questionText(section).orEmpty()
 }

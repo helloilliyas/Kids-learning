@@ -2,6 +2,8 @@ package com.kidslearning.app.data.remote
 
 import android.content.Context
 import com.kidslearning.app.data.local.SourceImages
+import com.kidslearning.app.domain.model.AnswerKey
+import com.kidslearning.app.domain.model.ExplanationSection
 import com.kidslearning.app.domain.model.Lesson
 import com.kidslearning.app.domain.model.LessonChecks
 import kotlinx.serialization.json.JsonArray
@@ -37,6 +39,52 @@ class DirectGenerator(apiKey: String, private val context: Context) {
         val errors: List<String>,
         val images: List<ByteArray> = emptyList(),
     )
+
+    /**
+     * Follow-up practice set for a finished lesson: a handful of NEW questions on
+     * the concepts the child found hard, at a difficulty the parent/child picked.
+     * Reuses the full two-stage pipeline with the base lesson's own explanations
+     * as the source material, so practice stays grounded in what was taught.
+     */
+    suspend fun generatePractice(
+        base: Lesson,
+        weakConceptIds: List<String>,
+        difficulty: String,
+        numQuestions: Int,
+    ): DirectResult {
+        val weakNames = base.concepts
+            .filter { it.conceptId in weakConceptIds }
+            .map { it.name }
+            .ifEmpty { base.concepts.map { it.name } }
+
+        val difficultyNote = when (difficulty) {
+            "easier" -> "noticeably EASIER than the original lesson: smaller steps, " +
+                "more scaffolding, simpler wording"
+            "harder" -> "noticeably HARDER than the original lesson: less scaffolding, " +
+                "multi-step thinking, trickier distractors"
+            else -> "the same difficulty as the original lesson"
+        }
+
+        val taught = base.sections.filterIsInstance<ExplanationSection>()
+            .joinToString("\n\n") { "${it.title}\n${it.content}" }
+        val alreadyAsked = base.sections
+            .mapNotNull { AnswerKey.questionText(it) }
+            .joinToString("\n") { "- $it" }
+
+        return generate(
+            topic = "Practice: ${base.title}",
+            subject = base.subject,
+            age = base.age,
+            objective = "Focused practice on: ${weakNames.joinToString(", ")}. " +
+                "Make every question $difficultyNote. Start with ONE very short " +
+                "encouraging recap explanation, then go straight into activities. " +
+                "Never repeat a question from the ALREADY ASKED list.",
+            sourceText = "WHAT WAS TAUGHT:\n$taught\n\nQUESTIONS ALREADY ASKED " +
+                "(write different ones):\n$alreadyAsked",
+            uploadedImages = emptyList(),
+            numQuestions = numQuestions,
+        )
+    }
 
     suspend fun generate(
         topic: String,

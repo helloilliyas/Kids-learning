@@ -44,6 +44,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kidslearning.app.domain.model.Activity
+import com.kidslearning.app.domain.model.AnswerKey
 import com.kidslearning.app.domain.model.AnswerResult
 import com.kidslearning.app.domain.model.ConceptMastery
 import com.kidslearning.app.domain.model.ExplanationSection
@@ -65,15 +66,28 @@ import com.kidslearning.app.ui.theme.subjectEmoji
  * - Coral Back / blue Next buttons with the subject-age breadcrumb between them.
  *
  * Pages are derived from the lesson data: every explanation starts a new page and
- * collects the activities that follow it. Next unlocks when every exercise on the
- * page is solved; tabs allow revisiting any unlocked page.
+ * collects the activities that follow it. Like a paper workbook, the child can
+ * skip ahead and come back to any question via the tabs; on the last page,
+ * Submit closes the lesson and reveals an answer key for anything left
+ * unanswered. Finished lessons can spin up a follow-up practice set (count and
+ * difficulty chosen on the completion screen) targeting the weakest concepts.
  */
+
+/** What the completion screen asks for when "more practice" is requested. */
+data class PracticeRequest(
+    val baseLesson: Lesson,
+    val weakConceptIds: List<String>,
+    val difficulty: String, // "easier" | "same" | "harder"
+    val numQuestions: Int,
+)
+
 @Composable
 fun LessonPlayerScreen(
     lesson: Lesson,
     speak: (String) -> Unit,
     onExit: () -> Unit,
     onResult: (AnswerResult) -> Unit = {},
+    onPractice: ((PracticeRequest) -> Unit)? = null,
 ) {
     val pages = remember(lesson.lessonId) { buildPages(lesson.sections) }
     val activityNumbers = remember(lesson.lessonId) {
@@ -83,19 +97,43 @@ fun LessonPlayerScreen(
     val totalActivities = activityNumbers.size
 
     var pageIndex by remember(lesson.lessonId) { mutableIntStateOf(0) }
-    var maxUnlocked by remember(lesson.lessonId) { mutableIntStateOf(0) }
     var showCompletion by remember(lesson.lessonId) { mutableStateOf(false) }
     val results = remember(lesson.lessonId) { mutableStateMapOf<String, AnswerResult>() }
     val mastery = remember(lesson.lessonId) { mutableStateMapOf<String, ConceptMastery>() }
 
+    val allActivities = remember(lesson.lessonId) {
+        lesson.sections.filterIsInstance<Activity>()
+    }
+
+    fun recordResult(result: AnswerResult) {
+        results[result.sectionId] = result
+        result.conceptId?.let { cid ->
+            mastery[cid] = MasteryEngine.update(
+                mastery[cid] ?: MasteryEngine.initial(cid),
+                result,
+            )
+        }
+        onResult(result) // persistence hook
+    }
+
     if (showCompletion) {
-        CompletionScreen(lesson, results.values.toList(), mastery, onExit)
+        val skipped = allActivities.filter { it.id !in results }
+        CompletionScreen(
+            lesson = lesson,
+            results = results.values.toList(),
+            skipped = skipped,
+            activityNumbers = activityNumbers,
+            mastery = mastery,
+            onPractice = onPractice,
+            onExit = onExit,
+        )
         return
     }
 
     val page = pages[pageIndex]
     val pageDone = page.filterIsInstance<Activity>().all { results.containsKey(it.id) }
     val isLastPage = pageIndex == pages.size - 1
+    val allDone = results.size == totalActivities
 
     Column(modifier = Modifier.fillMaxSize().background(Workbook.PageBackground)) {
         HeaderBar(lesson, correct = results.size, total = totalActivities)
@@ -103,7 +141,7 @@ fun LessonPlayerScreen(
         PageTabs(
             pages = pages,
             current = pageIndex,
-            maxUnlocked = maxUnlocked,
+            doneIds = results.keys,
             onSelect = { pageIndex = it },
         )
 
@@ -128,16 +166,7 @@ fun LessonPlayerScreen(
                         number = (section as? Activity)?.let { activityNumbers[it.id] },
                         readAloud = true,
                         speak = speak,
-                        onAnswered = { result ->
-                            results[result.sectionId] = result
-                            result.conceptId?.let { cid ->
-                                mastery[cid] = MasteryEngine.update(
-                                    mastery[cid] ?: MasteryEngine.initial(cid),
-                                    result,
-                                )
-                            }
-                            onResult(result) // persistence hook
-                        },
+                        onAnswered = ::recordResult,
                     )
                     if (i < page.size - 1 && section is Activity) {
                         HorizontalDivider(color = Workbook.PageBackground, thickness = 1.5.dp)
@@ -171,15 +200,41 @@ fun LessonPlayerScreen(
 
             Button(
                 onClick = {
-                    if (isLastPage) showCompletion = true
-                    else {
-                        pageIndex += 1
-                        if (pageIndex > maxUnlocked) maxUnlocked = pageIndex
-                    }
+                    if (isLastPage) {
+                        // Submitting with questions still open counts each of them
+                        // as not-yet-known for mastery, and the completion screen
+                        // reveals their answers.
+                        allActivities.filter { it.id !in results }.forEach { activity ->
+                            onResult(
+                                AnswerResult(
+                                    sectionId = activity.id,
+                                    conceptId = activity.conceptId,
+                                    correct = false,
+                                    attempts = 1,
+                                    usedHint = false,
+                                )
+                            )
+                            activity.conceptId?.let { cid ->
+                                mastery[cid] = MasteryEngine.update(
+                                    mastery[cid] ?: MasteryEngine.initial(cid),
+                                    AnswerResult(activity.id, cid, false, 1, false),
+                                )
+                            }
+                        }
+                        showCompletion = true
+                    } else pageIndex += 1
                 },
-                enabled = pageDone,
                 modifier = Modifier.sizeIn(minHeight = 50.dp),
-            ) { Text(if (isLastPage) "Finish 🏁" else "Next →") }
+            ) {
+                Text(
+                    when {
+                        !isLastPage && pageDone -> "Next →"
+                        !isLastPage -> "Skip →"
+                        allDone -> "Finish 🏁"
+                        else -> "Submit ✅"
+                    }
+                )
+            }
         }
     }
 }
@@ -258,7 +313,7 @@ private fun HeaderBar(lesson: Lesson, correct: Int, total: Int) {
 private fun PageTabs(
     pages: List<List<Section>>,
     current: Int,
-    maxUnlocked: Int,
+    doneIds: Set<String>,
     onSelect: (Int) -> Unit,
 ) {
     Row(
@@ -269,18 +324,18 @@ private fun PageTabs(
             .padding(horizontal = 14.dp, vertical = 10.dp),
     ) {
         pages.forEachIndexed { index, page ->
-            val unlocked = index <= maxUnlocked
             val selected = index == current
+            val activities = page.filterIsInstance<Activity>()
+            val done = activities.isNotEmpty() && activities.all { it.id in doneIds }
             Surface(
-                onClick = { if (unlocked) onSelect(index) },
-                enabled = unlocked,
+                onClick = { onSelect(index) },
                 color = if (selected) Workbook.CardWhite else Workbook.BlueLight,
-                contentColor = if (unlocked) Workbook.TextDark else Workbook.TextMuted,
+                contentColor = Workbook.TextDark,
                 border = if (selected) BorderStroke(1.5.dp, Workbook.Blue) else null,
                 shape = MaterialTheme.shapes.small,
             ) {
                 Text(
-                    (if (unlocked) "" else "🔒 ") + pageLabel(page, index),
+                    (if (done) "✓ " else "") + pageLabel(page, index),
                     style = MaterialTheme.typography.labelLarge,
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                 )
@@ -293,17 +348,21 @@ private fun PageTabs(
 private fun CompletionScreen(
     lesson: Lesson,
     results: List<AnswerResult>,
+    skipped: List<Activity>,
+    activityNumbers: Map<String, Int>,
     mastery: Map<String, ConceptMastery>,
+    onPractice: ((PracticeRequest) -> Unit)?,
     onExit: () -> Unit,
 ) {
     val firstTry = results.count { it.attempts == 1 && !it.usedHint }
+    val total = results.size + skipped.size
     Box(modifier = Modifier.fillMaxSize().background(Workbook.PageBackground)) {
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text("🎉", fontSize = 84.sp)
+            Text(if (skipped.isEmpty()) "🎉" else "📋", fontSize = 84.sp)
             Text(
                 lesson.completionMessage,
                 style = MaterialTheme.typography.headlineSmall,
@@ -315,11 +374,15 @@ private fun CompletionScreen(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(
-                    "⭐ You solved $firstTry of ${results.size} activities on the first try!",
+                    "⭐ You solved $firstTry of $total activities on the first try!",
                     style = MaterialTheme.typography.titleMedium,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
                 )
+            }
+
+            if (skipped.isNotEmpty()) {
+                AnswerKeyCard(skipped, activityNumbers)
             }
 
             lesson.concepts.forEach { concept ->
@@ -355,11 +418,131 @@ private fun CompletionScreen(
                 }
             }
 
+            if (onPractice != null) {
+                PracticeSetupCard(lesson, mastery, onPractice)
+            }
+
             Button(
                 onClick = onExit,
                 modifier = Modifier.fillMaxWidth().sizeIn(minHeight = 56.dp),
             ) { Text("Done ✨", style = MaterialTheme.typography.titleMedium) }
         }
-        ConfettiOverlay(modifier = Modifier.fillMaxSize())
+        if (skipped.isEmpty()) ConfettiOverlay(modifier = Modifier.fillMaxSize())
+    }
+}
+
+/** Back-of-the-book answer key for questions submitted without an answer. */
+@Composable
+private fun AnswerKeyCard(skipped: List<Activity>, activityNumbers: Map<String, Int>) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Workbook.Cream),
+        border = BorderStroke(1.5.dp, Workbook.CreamBorder),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Text("🔑 Answer key", style = MaterialTheme.typography.titleMedium)
+            Text(
+                "You skipped these — here are the answers to learn from:",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Workbook.TextMuted,
+            )
+            skipped.forEach { activity ->
+                Column {
+                    Text(
+                        "${activityNumbers[activity.id] ?: "•"}. " +
+                            (AnswerKey.questionText(activity) ?: ""),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    Text(
+                        "✔ ${AnswerKey.answerText(activity) ?: "See the lesson"}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Workbook.GreenBorder,
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * "More practice" setup: pick how many questions and how hard, then generate a
+ * fresh set aimed at the concepts that need work. Only offered when the app has
+ * an AI connection (the parent's key is configured).
+ */
+@Composable
+private fun PracticeSetupCard(
+    lesson: Lesson,
+    mastery: Map<String, ConceptMastery>,
+    onPractice: (PracticeRequest) -> Unit,
+) {
+    var difficulty by remember { mutableStateOf("same") }
+    var count by remember { mutableIntStateOf(5) }
+
+    val weakIds = remember(mastery) {
+        val weak = mastery.values.filter { it.needsPractice }.map { it.conceptId }
+        weak.ifEmpty {
+            mastery.values.sortedBy { it.mastery }.take(2).map { it.conceptId }
+        }.ifEmpty { lesson.concepts.map { it.conceptId } }
+    }
+    val weakNames = lesson.concepts
+        .filter { it.conceptId in weakIds }.map { it.name }
+        .ifEmpty { lesson.concepts.map { it.name } }
+
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Workbook.CardWhite),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Text("✏️ More practice?", style = MaterialTheme.typography.titleMedium)
+            Text(
+                "New questions about: ${weakNames.joinToString(", ")}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Workbook.TextMuted,
+            )
+
+            Text("How hard?", style = MaterialTheme.typography.labelLarge)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                ChoiceChip("😌 Easier", difficulty == "easier") { difficulty = "easier" }
+                ChoiceChip("🙂 Same", difficulty == "same") { difficulty = "same" }
+                ChoiceChip("🔥 Harder", difficulty == "harder") { difficulty = "harder" }
+            }
+
+            Text("How many questions?", style = MaterialTheme.typography.labelLarge)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf(3, 5, 8).forEach { n ->
+                    ChoiceChip("$n", count == n) { count = n }
+                }
+            }
+
+            Button(
+                onClick = {
+                    onPractice(PracticeRequest(lesson, weakIds, difficulty, count))
+                },
+                modifier = Modifier.fillMaxWidth().sizeIn(minHeight = 48.dp),
+            ) { Text("✨ Make my practice questions") }
+        }
+    }
+}
+
+@Composable
+private fun ChoiceChip(label: String, selected: Boolean, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        color = if (selected) Workbook.Blue else Workbook.BlueLight,
+        contentColor = if (selected) Color.White else Workbook.TextDark,
+        border = if (selected) null else BorderStroke(1.dp, Workbook.Blue.copy(alpha = 0.3f)),
+        shape = MaterialTheme.shapes.small,
+    ) {
+        Text(
+            label,
+            style = MaterialTheme.typography.labelLarge,
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp),
+        )
     }
 }

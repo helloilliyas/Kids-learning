@@ -16,8 +16,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -26,6 +28,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -47,12 +50,14 @@ import com.kidslearning.app.data.local.DatabaseProvider
 import com.kidslearning.app.data.local.LessonEntity
 import com.kidslearning.app.data.local.Prefs
 import com.kidslearning.app.data.local.SourceImages
+import com.kidslearning.app.data.remote.DirectGenerator
 import com.kidslearning.app.data.remote.LessonJson
 import com.kidslearning.app.domain.model.AnswerResult
 import com.kidslearning.app.domain.model.ConceptMastery
 import com.kidslearning.app.domain.model.Lesson
 import com.kidslearning.app.domain.model.MasteryEngine
 import com.kidslearning.app.ui.child.LessonPlayerScreen
+import com.kidslearning.app.ui.child.PracticeRequest
 import com.kidslearning.app.ui.child.Tts
 import com.kidslearning.app.ui.parent.ParentGate
 import com.kidslearning.app.ui.parent.ParentScreen
@@ -64,6 +69,7 @@ import com.kidslearning.app.ui.theme.subjectEmoji
 import com.kidslearning.app.ui.theme.subjectGradient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Entry point and navigation. Child mode is the default; parent mode sits behind
@@ -93,6 +99,7 @@ private sealed interface Screen {
     data object Gate : Screen
     data object Parent : Screen
     data class Preview(val lesson: Lesson, val images: List<ByteArray>) : Screen
+    data class GeneratingPractice(val request: PracticeRequest) : Screen
 }
 
 @Composable
@@ -186,9 +193,37 @@ private fun App() {
                     speak = tts::speak,
                     onExit = { screen = Screen.Home },
                     onResult = { persistResult(current.lesson, it) },
+                    onPractice = if (prefs.anthropicKey.isNotBlank()) {
+                        { request -> screen = Screen.GeneratingPractice(request) }
+                    } else null,
                 )
             }
         }
+
+        is Screen.GeneratingPractice -> PracticeGeneratingScreen(
+            request = current.request,
+            apiKey = prefs.anthropicKey,
+            persist = { lesson, images ->
+                val now = System.currentTimeMillis()
+                SourceImages.save(context, lesson.lessonId, images)
+                db.lessonDao().upsertLesson(
+                    LessonEntity(
+                        lessonId = lesson.lessonId,
+                        version = 1,
+                        title = lesson.title,
+                        subject = lesson.subject,
+                        age = lesson.age,
+                        approved = true,
+                        schemaVersion = lesson.schemaVersion,
+                        lessonJson = LessonJson.encode(lesson),
+                        createdAt = now,
+                        updatedAt = now,
+                    )
+                )
+            },
+            onPlay = { screen = Screen.Playing(it) },
+            onCancel = { screen = Screen.Home },
+        )
 
         is Screen.Gate -> ParentGate(
             onUnlock = { screen = Screen.Parent },
@@ -226,6 +261,76 @@ private fun App() {
             },
             onDiscard = { screen = Screen.Parent },
         )
+    }
+}
+
+/**
+ * Full-screen wait while the practice set is generated on-device, then saves it
+ * (auto-approved: it is derived from an already-approved lesson) and plays it.
+ */
+@Composable
+private fun PracticeGeneratingScreen(
+    request: PracticeRequest,
+    apiKey: String,
+    persist: suspend (Lesson, List<ByteArray>) -> Unit,
+    onPlay: (Lesson) -> Unit,
+    onCancel: () -> Unit,
+) {
+    val context = LocalContext.current
+    var error by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(request) {
+        val result = runCatching {
+            DirectGenerator(apiKey, context).generatePractice(
+                base = request.baseLesson,
+                weakConceptIds = request.weakConceptIds,
+                difficulty = request.difficulty,
+                numQuestions = request.numQuestions,
+            )
+        }.getOrElse {
+            DirectGenerator.DirectResult(null, listOf(it.message ?: "Generation failed."))
+        }
+        val lesson = result.lesson
+        if (lesson != null && result.errors.isEmpty()) {
+            withContext(Dispatchers.IO) { persist(lesson, result.images) }
+            onPlay(lesson)
+        } else {
+            error = result.errors.firstOrNull() ?: "Could not make practice questions."
+        }
+    }
+
+    Column(
+        modifier = Modifier.fillMaxSize().background(Workbook.PageBackground).padding(24.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        if (error == null) {
+            Text("✏️", fontSize = 64.sp)
+            Spacer(Modifier.height(16.dp))
+            CircularProgressIndicator()
+            Spacer(Modifier.height(16.dp))
+            Text(
+                "Making ${request.numQuestions} new practice questions…",
+                style = MaterialTheme.typography.titleMedium,
+            )
+            Text(
+                "About: ${request.baseLesson.title}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Workbook.TextMuted,
+                modifier = Modifier.padding(top = 6.dp),
+            )
+        } else {
+            Text("😕", fontSize = 64.sp)
+            Spacer(Modifier.height(16.dp))
+            Text(
+                "Could not make the practice questions:\n${error?.take(200)}",
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
+        Spacer(Modifier.height(20.dp))
+        TextButton(onClick = onCancel) {
+            Text(if (error == null) "Cancel" else "← Back to lessons")
+        }
     }
 }
 
