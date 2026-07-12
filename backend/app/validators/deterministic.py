@@ -33,6 +33,9 @@ SUPPORTED_TYPES = {
     "match_pairs",
     "drag_into_order",
     "build_bar_chart",
+    "tap_image",
+    "sort_into_categories",
+    "number_line",
 }
 
 # Display-only sections teach; everything else is answered and scored.
@@ -119,6 +122,12 @@ def validate_lesson(lesson: dict) -> ValidationResult:
             _check_chart(section, result)
         elif stype == "build_bar_chart":
             _check_build_bar_chart(section, result)
+        elif stype == "tap_image":
+            _check_tap_image(section, result)
+        elif stype == "sort_into_categories":
+            _check_sort(section, result)
+        elif stype == "number_line":
+            _check_number_line(section, result)
 
         _check_duplicate(section, seen_questions, result)
 
@@ -336,6 +345,59 @@ def _check_build_bar_chart(section: dict, result: ValidationResult) -> None:
     labels = [i["label"].strip().lower() for i in section.get("items", [])]
     if len(set(labels)) != len(labels):
         result.add("duplicate_bar_label", "Bar items repeat a label.", sid)
+
+
+def _check_tap_image(section: dict, result: ValidationResult) -> None:
+    sid = section.get("id")
+    options = section.get("options", [])
+    option_ids = [o["id"] for o in options]
+    if len(set(option_ids)) != len(option_ids):
+        result.add("duplicate_option_id", "Tap-image option ids are not unique.", sid)
+    if section.get("correct_option_id") not in option_ids:
+        result.add("correct_answer_missing", "correct_option_id is not an option.", sid)
+    for option in options:
+        if not (option.get("image_search") or option.get("emoji") or option.get("label")):
+            result.add(
+                "blank_tap_option",
+                f"Option '{option.get('id')}' has no image_search, emoji, or label.",
+                sid,
+            )
+
+
+def _check_sort(section: dict, result: ValidationResult) -> None:
+    sid = section.get("id")
+    category_ids = [c["id"] for c in section.get("categories", [])]
+    if len(set(category_ids)) != len(category_ids):
+        result.add("duplicate_category_id", "Category ids are not unique.", sid)
+    item_ids = [i["id"] for i in section.get("items", [])]
+    if len(set(item_ids)) != len(item_ids):
+        result.add("duplicate_item_id", "Sort item ids are not unique.", sid)
+    used = set()
+    for item in section.get("items", []):
+        if item.get("category_id") not in category_ids:
+            result.add(
+                "unknown_category",
+                f"Item '{item.get('id')}' points at missing category '{item.get('category_id')}'.",
+                sid,
+            )
+        used.add(item.get("category_id"))
+    if len(used) < 2:
+        result.add("degenerate_sort", "All items belong to one category; nothing to sort.", sid)
+
+
+def _check_number_line(section: dict, result: ValidationResult) -> None:
+    sid = section.get("id")
+    lo, hi = section.get("min_value", 0), section.get("max_value", 0)
+    step = section.get("step", 1)
+    correct = section.get("correct_value", 0)
+    if lo >= hi:
+        result.add("bad_range", f"min_value {lo} must be below max_value {hi}.", sid)
+    elif not (lo <= correct <= hi):
+        result.add("answer_out_of_range", f"correct_value {correct} outside [{lo}, {hi}].", sid)
+    elif step >= 1 and (correct - lo) % step != 0:
+        result.add("answer_off_grid", f"correct_value {correct} not reachable with step {step}.", sid)
+    if step >= 1 and (hi - lo) // step > 100:
+        result.add("too_many_steps", "Number line has over 100 positions; too fiddly.", sid)
 
 
 def _check_duplicate(section: dict, seen: dict[str, str], result: ValidationResult) -> None:

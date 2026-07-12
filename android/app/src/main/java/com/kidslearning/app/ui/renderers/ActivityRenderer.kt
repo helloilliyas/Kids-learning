@@ -9,7 +9,10 @@ import com.kidslearning.app.domain.model.ExplanationSection
 import com.kidslearning.app.domain.model.FillInTheBlankSection
 import com.kidslearning.app.domain.model.MatchPairsSection
 import com.kidslearning.app.domain.model.MultipleChoiceSection
+import com.kidslearning.app.domain.model.NumberLineSection
 import com.kidslearning.app.domain.model.Section
+import com.kidslearning.app.domain.model.SortIntoCategoriesSection
+import com.kidslearning.app.domain.model.TapImageSection
 import com.kidslearning.app.domain.model.TrueFalseSection
 
 /**
@@ -38,5 +41,8 @@ fun RenderSection(
         is FillInTheBlankSection -> FillInTheBlankActivity(section, number, readAloud, speak, onAnswered)
         is MatchPairsSection -> MatchPairsActivity(section, number, readAloud, speak, onAnswered)
         is DragIntoOrderSection -> DragIntoOrderActivity(section, number, readAloud, speak, onAnswered)
+        is TapImageSection -> TapImageActivity(section, number, readAloud, speak, onAnswered)
+        is SortIntoCategoriesSection -> SortIntoCategoriesActivity(section, number, readAloud, speak, onAnswered)
+        is NumberLineSection -> NumberLineActivity(section, number, readAloud, speak, onAnswered)
     }
 }

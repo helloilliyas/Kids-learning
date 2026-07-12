@@ -29,7 +29,13 @@ class DirectGenerator(apiKey: String, private val context: Context) {
 
     private val client = AnthropicClient(apiKey)
 
-    data class DirectResult(val lesson: Lesson?, val errors: List<String>)
+    // images is the FULL list to store with the lesson: the parent's uploads first,
+    // then any photos fetched for image_search terms. image_ref indices point into it.
+    data class DirectResult(
+        val lesson: Lesson?,
+        val errors: List<String>,
+        val images: List<ByteArray> = emptyList(),
+    )
 
     suspend fun generate(
         topic: String,
@@ -37,59 +43,147 @@ class DirectGenerator(apiKey: String, private val context: Context) {
         age: Int,
         objective: String,
         sourceText: String,
-        images: List<String>,
+        uploadedImages: List<ByteArray>,
         numQuestions: Int = 6,
         language: String = "en",
     ): DirectResult {
+        val uploadedBase64 = uploadedImages.map(SourceImages::toBase64)
+
         // Stage 1: read the source (text + images) and produce a teaching plan.
         val plan = client.generateStructured(
             model = AnthropicClient.MODEL_SMALL,
             system = ANALYZE_SYSTEM,
             prompt = analyzePrompt(topic, subject, age, objective, sourceText, language),
             schema = planSchema(),
-            images = images,
+            images = uploadedBase64,
             maxTokens = 4096,
         )
 
         // Stage 2: turn the plan into a full lesson conforming to the shared schema.
-        val imageIndexNote = if (images.isEmpty()) "" else
-            "\n\nThere are ${images.size} attached image(s), numbered 0 to ${images.size - 1} " +
-                "in the order attached. Sections about a graph, chart, table, or picture " +
-                "visible in one of them MUST set image_ref to that number."
+        val imageIndexNote = if (uploadedBase64.isEmpty()) "" else
+            "\n\nThere are ${uploadedBase64.size} attached image(s), numbered 0 to " +
+                "${uploadedBase64.size - 1} in the order attached. Sections about a graph, " +
+                "chart, table, or picture visible in one of them MUST set image_ref to that number."
         val rawLesson = client.generateStructured(
             model = AnthropicClient.MODEL_STRONG,
             system = LESSON_SYSTEM,
             prompt = lessonPrompt(plan.toString(), topic, subject, age, objective, numQuestions, language) +
                 imageIndexNote,
             schema = lessonSchema(),
-            images = images,
+            images = uploadedBase64,
             maxTokens = 16384,
         )
 
         // Recover the recoverable: unwrap, fill known metadata, derive concepts.
         var candidate = normalize(rawLesson, topic, subject, age, objective, language)
-        var lesson = tryDecode(candidate)
 
+        // Fetch real photos for image_search terms and rewrite them to image_ref,
+        // appending the fetched images after the uploaded ones.
+        val (resolved, allImages) = resolveImageSearches(candidate, uploadedImages)
+        candidate = resolved
+
+        var lesson = tryDecode(candidate)
         if (lesson == null) {
             // One repair pass: show the model its own output and the exact failure.
             val problem = decodeFailure(candidate) ?: "unknown validation problem"
             val repaired = client.generateStructured(
                 model = AnthropicClient.MODEL_STRONG,
                 system = LESSON_SYSTEM,
-                prompt = repairPrompt(rawLesson.toString(), problem),
+                prompt = repairPrompt(candidate.toString(), problem),
                 schema = lessonSchema(),
                 maxTokens = 16384,
             )
             candidate = normalize(repaired, topic, subject, age, objective, language)
+            // The repair keeps already-resolved image_ref values; do not refetch.
             lesson = tryDecode(candidate)
                 ?: return DirectResult(
                     null,
                     listOf("The AI produced an invalid lesson twice: ${decodeFailure(candidate)?.take(200)}"),
+                    allImages,
                 )
         }
 
-        return DirectResult(lesson, LessonChecks.validate(lesson, images.size))
+        return DirectResult(lesson, LessonChecks.validate(lesson, allImages.size), allImages)
     }
+
+    /**
+     * Walk the lesson JSON, fetch a Wikipedia lead photo for each distinct
+     * image_search term (on sections and on tap_image options), append them after
+     * the uploaded images, and rewrite each image_search into an image_ref index.
+     * Terms that fetch nothing are left as-is (renderers fall back to emoji/label).
+     */
+    private suspend fun resolveImageSearches(
+        candidate: JsonObject,
+        uploadedImages: List<ByteArray>,
+    ): Pair<JsonObject, List<ByteArray>> {
+        val terms = collectSearchTerms(candidate)
+        if (terms.isEmpty()) return candidate to uploadedImages
+
+        val fetched = LinkedHashMap<String, Int>() // term -> image index
+        val images = uploadedImages.toMutableList()
+        for (term in terms) {
+            val bytes = WikipediaImages.fetch(term) ?: continue
+            fetched[term] = images.size
+            images.add(bytes)
+        }
+        if (fetched.isEmpty()) return candidate to uploadedImages
+
+        val sections = (candidate["sections"] as? JsonArray) ?: return candidate to images
+        val rewrittenSections = buildJsonArray {
+            sections.forEach { element ->
+                val section = element.jsonObject
+                add(rewriteSectionImages(section, fetched))
+            }
+        }
+        val rewritten = buildJsonObject {
+            candidate.forEach { (k, v) -> if (k != "sections") put(k, v) }
+            put("sections", rewrittenSections)
+        }
+        return rewritten to images
+    }
+
+    private fun collectSearchTerms(candidate: JsonObject): List<String> {
+        val terms = LinkedHashSet<String>()
+        (candidate["sections"] as? JsonArray)?.forEach { element ->
+            val section = element.jsonObject
+            (section["image_search"] as? JsonPrimitive)?.content
+                ?.takeIf { it.isNotBlank() }?.let { terms.add(it) }
+            (section["options"] as? JsonArray)?.forEach { opt ->
+                (opt.jsonObject["image_search"] as? JsonPrimitive)?.content
+                    ?.takeIf { it.isNotBlank() }?.let { terms.add(it) }
+            }
+        }
+        return terms.toList()
+    }
+
+    private fun rewriteSectionImages(section: JsonObject, fetched: Map<String, Int>): JsonObject =
+        buildJsonObject {
+            section.forEach { (key, value) ->
+                when {
+                    key == "image_search" -> {
+                        val idx = (value as? JsonPrimitive)?.content?.let { fetched[it] }
+                        if (idx != null) put("image_ref", JsonPrimitive(idx)) else put(key, value)
+                    }
+                    key == "options" && value is JsonArray -> {
+                        putJsonArray("options") {
+                            value.forEach { opt ->
+                                val o = opt.jsonObject
+                                add(buildJsonObject {
+                                    o.forEach { (ok, ov) ->
+                                        if (ok == "image_search") {
+                                            val idx = (ov as? JsonPrimitive)?.content?.let { fetched[it] }
+                                            if (idx != null) put("image_ref", JsonPrimitive(idx))
+                                            else put(ok, ov)
+                                        } else put(ok, ov)
+                                    }
+                                })
+                            }
+                        }
+                    }
+                    else -> put(key, value)
+                }
+            }
+        }
 
     private fun tryDecode(candidate: JsonObject): Lesson? = runCatching {
         LessonJson.codec.decodeFromJsonElement(Lesson.serializer(), candidate)
@@ -272,8 +366,9 @@ class DirectGenerator(apiKey: String, private val context: Context) {
         cards and activities building from difficulty_level 1 upward, ending with a
         challenge activity and a warm completion_message. Use only these section
         types: explanation, chart, multiple_choice, true_false, fill_in_the_blank,
-        match_pairs, drag_into_order, build_bar_chart. Give every section a
-        unique snake_case id.
+        match_pairs, drag_into_order, build_bar_chart, tap_image,
+        sort_into_categories, number_line. Vary the activity types so the lesson
+        stays fresh. Give every section a unique snake_case id.
         Every activity must reference a concept_id declared in the concepts list.
 
         TEACHING PLAN:
@@ -322,6 +417,17 @@ class DirectGenerator(apiKey: String, private val context: Context) {
               attaching its photo — it is clearer for the child. Use the
               "build_bar_chart" activity (items with label/target, plus max_value)
               to let the child BUILD a graph by dragging bars to the right heights.
+            - REAL PHOTOS on demand: any section may set "image_search" to a
+              concrete noun phrase matching a Wikipedia article title ("Jupiter",
+              "Bengal tiger"). The app fetches that article's lead photo and shows
+              it. Use it to SHOW real things (planets, animals, landmarks) when no
+              uploaded image covers them. Keep terms unambiguous.
+            - "tap_image": the child taps the correct picture. Give each option an
+              "image_search" for a real photo AND an "emoji" fallback.
+            - "sort_into_categories": drag items into 2-4 labelled buckets
+              (living/non-living, inner/outer planets, nouns/verbs).
+            - "number_line": the child slides a marker to the answer (min_value,
+              max_value, step, correct_value).
             - Give every section a relevant emoji, and options an emoji where a
               picture helps young children. NEVER use an emoji that reveals the
               answer (no numbers on ordering items, no check marks on options).

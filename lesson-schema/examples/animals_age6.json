@@ -1,0 +1,186 @@
+{
+  "schema_version": "1.0",
+  "lesson_id": "lesson_animals_001",
+  "title": "Amazing Animals",
+  "subject": "Science",
+  "language": "en",
+  "age": 6,
+  "difficulty": "beginner",
+  "estimated_duration_minutes": 8,
+  "learning_objectives": [
+    "Recognise animals by sight",
+    "Sort animals into farm and wild",
+    "Count animal legs on a number line"
+  ],
+  "concepts": [
+    {
+      "concept_id": "recognising_animals",
+      "name": "Recognising animals"
+    },
+    {
+      "concept_id": "animal_homes",
+      "name": "Farm and wild animals"
+    },
+    {
+      "concept_id": "counting",
+      "name": "Counting"
+    }
+  ],
+  "source_references": [],
+  "sections": [
+    {
+      "id": "intro",
+      "type": "explanation",
+      "concept_id": "recognising_animals",
+      "difficulty_level": 1,
+      "emoji": "🦁",
+      "title": "Let's meet some animals!",
+      "content": "Animals live all around the world. Some live on farms. Some live wild in forests and jungles. Let's play!",
+      "grounding": {
+        "basis": "general_knowledge"
+      }
+    },
+    {
+      "id": "q_tap_elephant",
+      "type": "tap_image",
+      "concept_id": "recognising_animals",
+      "difficulty_level": 1,
+      "emoji": "👀",
+      "question": "Tap the elephant!",
+      "options": [
+        {
+          "id": "cat",
+          "label": "Cat",
+          "emoji": "🐱"
+        },
+        {
+          "id": "elephant",
+          "label": "Elephant",
+          "emoji": "🐘"
+        },
+        {
+          "id": "fish",
+          "label": "Fish",
+          "emoji": "🐟"
+        }
+      ],
+      "correct_option_id": "elephant",
+      "hint": "The elephant is the biggest one, with a long trunk.",
+      "correct_feedback": "Yes! The elephant has a long trunk and big ears.",
+      "incorrect_feedback": "That's not the elephant. Look for the animal with the long trunk!",
+      "grounding": {
+        "basis": "general_knowledge"
+      }
+    },
+    {
+      "id": "q_sort_animals",
+      "type": "sort_into_categories",
+      "concept_id": "animal_homes",
+      "difficulty_level": 2,
+      "emoji": "🏡",
+      "instruction": "Sort the animals: who lives on the farm, and who lives in the wild?",
+      "categories": [
+        {
+          "id": "farm",
+          "label": "Farm",
+          "emoji": "🚜"
+        },
+        {
+          "id": "wild",
+          "label": "Wild",
+          "emoji": "🌴"
+        }
+      ],
+      "items": [
+        {
+          "id": "cow",
+          "text": "Cow",
+          "emoji": "🐄",
+          "category_id": "farm"
+        },
+        {
+          "id": "lion",
+          "text": "Lion",
+          "emoji": "🦁",
+          "category_id": "wild"
+        },
+        {
+          "id": "chicken",
+          "text": "Chicken",
+          "emoji": "🐔",
+          "category_id": "farm"
+        },
+        {
+          "id": "monkey",
+          "text": "Monkey",
+          "emoji": "🐒",
+          "category_id": "wild"
+        },
+        {
+          "id": "sheep",
+          "text": "Sheep",
+          "emoji": "🐑",
+          "category_id": "farm"
+        }
+      ],
+      "hint": "Farm animals live with people. Wild animals live in the jungle or forest.",
+      "correct_feedback": "Great sorting! Cows and sheep live on farms. Lions and monkeys live in the wild.",
+      "incorrect_feedback": "Think about where you would see each animal — on a farm with people, or out in the jungle?",
+      "grounding": {
+        "basis": "general_knowledge"
+      }
+    },
+    {
+      "id": "q_legs_numberline",
+      "type": "number_line",
+      "concept_id": "counting",
+      "difficulty_level": 2,
+      "emoji": "🕷️",
+      "question": "A spider has how many legs? Slide the marker!",
+      "min_value": 0,
+      "max_value": 10,
+      "step": 1,
+      "correct_value": 8,
+      "unit": "legs",
+      "hint": "It is more than 6 and less than 10 — count them in pairs: 2, 4, 6, 8!",
+      "correct_feedback": "Yes! Spiders have 8 legs — that's why they are not insects.",
+      "incorrect_feedback": "Count again in twos: 2, 4, 6, 8. A spider has 8 legs!",
+      "grounding": {
+        "basis": "general_knowledge"
+      }
+    },
+    {
+      "id": "q_tap_bird",
+      "type": "tap_image",
+      "concept_id": "recognising_animals",
+      "difficulty_level": 3,
+      "emoji": "🪶",
+      "question": "Which animal can fly?",
+      "options": [
+        {
+          "id": "owl",
+          "label": "Owl",
+          "emoji": "🦉"
+        },
+        {
+          "id": "turtle",
+          "label": "Turtle",
+          "emoji": "🐢"
+        },
+        {
+          "id": "rabbit",
+          "label": "Rabbit",
+          "emoji": "🐰"
+        }
+      ],
+      "correct_option_id": "owl",
+      "hint": "Look for the animal with wings and feathers.",
+      "correct_feedback": "Correct! Owls have wings and can fly at night.",
+      "incorrect_feedback": "Turtles and rabbits can't fly — the owl has wings and feathers!",
+      "grounding": {
+        "basis": "general_knowledge"
+      }
+    }
+  ],
+  "completion_message": "Roar-some work! You know your animals, where they live, and how to count their legs!"
+}

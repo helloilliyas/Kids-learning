@@ -268,12 +268,12 @@ fun ParentScreen(
                                             age = age.toInt(),
                                             objective = objective.trim(),
                                             sourceText = sourceText,
-                                            images = images.map(SourceImages::toBase64),
+                                            uploadedImages = images.toList(),
                                         )
                                         val lesson = result.lesson
                                         when {
                                             lesson != null && result.errors.isEmpty() ->
-                                                onPreview(lesson, images.toList())
+                                                onPreview(lesson, result.images)
                                             lesson != null ->
                                                 error = "The lesson failed checks: " +
                                                     result.errors.take(3).joinToString("; ")

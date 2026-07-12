@@ -30,6 +30,9 @@ import com.kidslearning.app.domain.model.DragIntoOrderSection
 import com.kidslearning.app.domain.model.Lesson
 import com.kidslearning.app.domain.model.MatchPairsSection
 import com.kidslearning.app.domain.model.MultipleChoiceSection
+import com.kidslearning.app.domain.model.NumberLineSection
+import com.kidslearning.app.domain.model.SortIntoCategoriesSection
+import com.kidslearning.app.domain.model.TapImageSection
 import com.kidslearning.app.domain.model.Section
 import com.kidslearning.app.domain.model.TrueFalseSection
 import com.kidslearning.app.ui.theme.Workbook
@@ -125,6 +128,9 @@ private fun sectionKind(section: Section): String = when (section) {
     is ExplanationSection -> "Explanation"
     is ChartSection -> if (section.chartType == "pictograph") "Pictograph" else "Bar chart"
     is BuildBarChartSection -> "Build a bar chart"
+    is TapImageSection -> "Tap the picture"
+    is SortIntoCategoriesSection -> "Sort into groups"
+    is NumberLineSection -> "Number line"
     is MultipleChoiceSection ->
         if (section.selectionMode == "multiple") "Multiple selection" else "Multiple choice"
     is TrueFalseSection -> "True or false"
@@ -138,6 +144,9 @@ private fun sectionText(section: Section): String = when (section) {
     is ChartSection -> section.title + ": " +
         section.items.joinToString { "${it.label} ${it.value}" }
     is BuildBarChartSection -> section.instruction
+    is TapImageSection -> section.question
+    is SortIntoCategoriesSection -> section.instruction
+    is NumberLineSection -> section.question
     is MultipleChoiceSection -> section.question
     is TrueFalseSection -> section.statement
     is FillInTheBlankSection -> section.template.replace(Regex("\\{\\{[^}]+\\}\\}"), "____")
@@ -156,5 +165,12 @@ private fun answerSummary(section: Section): String? = when (section) {
         section.correctOrder.mapNotNull { byId[it]?.text }.joinToString(" → ")
     }
     is BuildBarChartSection -> section.items.joinToString { "${it.label}: ${it.target}" }
+    is TapImageSection -> section.options.firstOrNull { it.id == section.correctOptionId }
+        ?.let { it.label ?: it.emoji ?: it.id }
+    is SortIntoCategoriesSection -> {
+        val cats = section.categories.associate { it.id to it.label }
+        section.items.joinToString { "${it.text}→${cats[it.categoryId] ?: it.categoryId}" }
+    }
+    is NumberLineSection -> "${section.correctValue}${section.unit?.let { " $it" } ?: ""}"
     else -> null
 }

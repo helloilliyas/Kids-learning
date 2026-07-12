@@ -53,6 +53,18 @@ Quality rules you must follow:
   section over attaching its photo — it is clearer for the child. Use the
   "build_bar_chart" activity (items with label/target, plus max_value) to let
   the child BUILD a graph by dragging bars to the right heights.
+- REAL PHOTOS on demand: any section may set "image_search" to a concrete noun
+  phrase matching a Wikipedia article title ("Jupiter", "Bengal tiger", "Great
+  Pyramid of Giza"). The app fetches that article's lead photo and shows it with
+  the section. Use it whenever seeing the real thing helps (planets, animals,
+  landmarks, plants) and no uploaded image covers it. Keep terms unambiguous.
+- "tap_image" activity: the child taps the correct picture. Give each option an
+  "image_search" for a real photo AND an "emoji" fallback. Great for "which one
+  is Saturn?" style questions.
+- "sort_into_categories": drag items into 2-4 labelled buckets (living/non-living,
+  inner/outer planets, nouns/verbs). Fits almost every subject.
+- "number_line": the child slides a marker to the answer (min_value, max_value,
+  step, correct_value). The go-to for estimation and counting questions.
 - Give every section a relevant "emoji" (e.g. ☀️ for evaporation) and add an
   "emoji" to options where a picture helps (especially for young children). The
   emoji is the visual for that content. NEVER use an emoji that reveals the
@@ -143,7 +155,9 @@ Structure the lesson as: a short introduction, then alternating explanation card
 and activities that build from difficulty_level 1 upward, ending with a challenge
 activity and a warm completion_message. Use only these section types:
 explanation, chart, multiple_choice, true_false, fill_in_the_blank, match_pairs,
-drag_into_order, build_bar_chart. Give every section a unique snake_case id.
+drag_into_order, build_bar_chart, tap_image, sort_into_categories, number_line.
+Vary the activity types so the lesson stays fresh. Give every section a unique
+snake_case id.
 Every activity must reference a concept_id declared in the concepts list.
 
 TEACHING PLAN:

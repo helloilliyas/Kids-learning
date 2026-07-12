@@ -74,6 +74,29 @@ object LessonChecks {
                     }
                 }
                 is TrueFalseSection -> activityCount++
+                is TapImageSection -> {
+                    activityCount++
+                    val ids = section.options.map { it.id }
+                    if (ids.size != ids.toSet().size) errors += "[$sid] duplicate option ids."
+                    if (section.correctOptionId !in ids) errors += "[$sid] correct option not present."
+                }
+                is SortIntoCategoriesSection -> {
+                    activityCount++
+                    val catIds = section.categories.map { it.id }.toSet()
+                    if (section.items.any { it.categoryId !in catIds }) {
+                        errors += "[$sid] an item points at a missing category."
+                    }
+                    if (section.items.map { it.categoryId }.toSet().size < 2) {
+                        errors += "[$sid] items must span at least two categories."
+                    }
+                }
+                is NumberLineSection -> {
+                    activityCount++
+                    if (section.minValue >= section.maxValue) errors += "[$sid] bad number-line range."
+                    else if (section.correctValue !in section.minValue..section.maxValue) {
+                        errors += "[$sid] answer outside the number line."
+                    }
+                }
                 is BuildBarChartSection -> {
                     activityCount++
                     section.items.forEach {
@@ -103,6 +126,9 @@ object LessonChecks {
                 is MatchPairsSection -> section.instruction
                 is DragIntoOrderSection -> section.instruction
                 is BuildBarChartSection -> section.instruction
+                is TapImageSection -> section.question
+                is SortIntoCategoriesSection -> section.instruction
+                is NumberLineSection -> section.question
                 is ChartSection -> null
                 is ExplanationSection -> null
             }?.lowercase()?.replace(Regex("[^a-z0-9 ]"), "")?.trim()

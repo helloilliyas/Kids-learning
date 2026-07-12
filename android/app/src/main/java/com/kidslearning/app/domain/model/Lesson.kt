@@ -73,6 +73,7 @@ sealed interface Section {
     val difficultyLevel: Int?
     val emoji: String?
     val imageRef: Int?
+    val imageSearch: String?
     val grounding: Grounding?
 }
 
@@ -84,6 +85,7 @@ data class ExplanationSection(
     @SerialName("difficulty_level") override val difficultyLevel: Int? = null,
     override val emoji: String? = null,
     @SerialName("image_ref") override val imageRef: Int? = null,
+    @SerialName("image_search") override val imageSearch: String? = null,
     override val grounding: Grounding? = null,
     val title: String,
     val content: String,
@@ -107,6 +109,7 @@ data class MultipleChoiceSection(
     @SerialName("difficulty_level") override val difficultyLevel: Int? = null,
     override val emoji: String? = null,
     @SerialName("image_ref") override val imageRef: Int? = null,
+    @SerialName("image_search") override val imageSearch: String? = null,
     override val grounding: Grounding? = null,
     val question: String,
     @SerialName("selection_mode") val selectionMode: String, // single | multiple
@@ -125,6 +128,7 @@ data class TrueFalseSection(
     @SerialName("difficulty_level") override val difficultyLevel: Int? = null,
     override val emoji: String? = null,
     @SerialName("image_ref") override val imageRef: Int? = null,
+    @SerialName("image_search") override val imageSearch: String? = null,
     override val grounding: Grounding? = null,
     val statement: String,
     @SerialName("correct_answer") val correctAnswer: Boolean,
@@ -141,6 +145,7 @@ data class FillInTheBlankSection(
     @SerialName("difficulty_level") override val difficultyLevel: Int? = null,
     override val emoji: String? = null,
     @SerialName("image_ref") override val imageRef: Int? = null,
+    @SerialName("image_search") override val imageSearch: String? = null,
     override val grounding: Grounding? = null,
     val template: String,
     val blanks: List<Blank>,
@@ -165,6 +170,7 @@ data class MatchPairsSection(
     @SerialName("difficulty_level") override val difficultyLevel: Int? = null,
     override val emoji: String? = null,
     @SerialName("image_ref") override val imageRef: Int? = null,
+    @SerialName("image_search") override val imageSearch: String? = null,
     override val grounding: Grounding? = null,
     val instruction: String,
     val pairs: List<Pair>,
@@ -184,6 +190,7 @@ data class ChartSection(
     @SerialName("difficulty_level") override val difficultyLevel: Int? = null,
     override val emoji: String? = null,
     @SerialName("image_ref") override val imageRef: Int? = null,
+    @SerialName("image_search") override val imageSearch: String? = null,
     override val grounding: Grounding? = null,
     val title: String,
     @SerialName("chart_type") val chartType: String, // bar | pictograph
@@ -207,6 +214,7 @@ data class BuildBarChartSection(
     @SerialName("difficulty_level") override val difficultyLevel: Int? = null,
     override val emoji: String? = null,
     @SerialName("image_ref") override val imageRef: Int? = null,
+    @SerialName("image_search") override val imageSearch: String? = null,
     override val grounding: Grounding? = null,
     val instruction: String,
     val items: List<BarTarget>,
@@ -225,6 +233,83 @@ data class BuildBarChartSection(
 }
 
 @Serializable
+@SerialName("tap_image")
+data class TapImageSection(
+    override val id: String,
+    @SerialName("concept_id") override val conceptId: String? = null,
+    @SerialName("difficulty_level") override val difficultyLevel: Int? = null,
+    override val emoji: String? = null,
+    @SerialName("image_ref") override val imageRef: Int? = null,
+    @SerialName("image_search") override val imageSearch: String? = null,
+    override val grounding: Grounding? = null,
+    val question: String,
+    val options: List<ImageOption>,
+    @SerialName("correct_option_id") val correctOptionId: String,
+    override val hint: String,
+    @SerialName("correct_feedback") override val correctFeedback: String,
+    @SerialName("incorrect_feedback") override val incorrectFeedback: String,
+) : Activity {
+    @Serializable
+    data class ImageOption(
+        val id: String,
+        val label: String? = null,
+        val emoji: String? = null,
+        @SerialName("image_search") val imageSearch: String? = null,
+        @SerialName("image_ref") val imageRef: Int? = null,
+    )
+}
+
+@Serializable
+@SerialName("sort_into_categories")
+data class SortIntoCategoriesSection(
+    override val id: String,
+    @SerialName("concept_id") override val conceptId: String? = null,
+    @SerialName("difficulty_level") override val difficultyLevel: Int? = null,
+    override val emoji: String? = null,
+    @SerialName("image_ref") override val imageRef: Int? = null,
+    @SerialName("image_search") override val imageSearch: String? = null,
+    override val grounding: Grounding? = null,
+    val instruction: String,
+    val categories: List<Category>,
+    val items: List<SortItem>,
+    override val hint: String,
+    @SerialName("correct_feedback") override val correctFeedback: String,
+    @SerialName("incorrect_feedback") override val incorrectFeedback: String,
+) : Activity {
+    @Serializable
+    data class Category(val id: String, val label: String, val emoji: String? = null)
+
+    @Serializable
+    data class SortItem(
+        val id: String,
+        val text: String,
+        val emoji: String? = null,
+        @SerialName("category_id") val categoryId: String,
+    )
+}
+
+@Serializable
+@SerialName("number_line")
+data class NumberLineSection(
+    override val id: String,
+    @SerialName("concept_id") override val conceptId: String? = null,
+    @SerialName("difficulty_level") override val difficultyLevel: Int? = null,
+    override val emoji: String? = null,
+    @SerialName("image_ref") override val imageRef: Int? = null,
+    @SerialName("image_search") override val imageSearch: String? = null,
+    override val grounding: Grounding? = null,
+    val question: String,
+    @SerialName("min_value") val minValue: Int,
+    @SerialName("max_value") val maxValue: Int,
+    val step: Int = 1,
+    @SerialName("correct_value") val correctValue: Int,
+    val unit: String? = null,
+    override val hint: String,
+    @SerialName("correct_feedback") override val correctFeedback: String,
+    @SerialName("incorrect_feedback") override val incorrectFeedback: String,
+) : Activity
+
+@Serializable
 @SerialName("drag_into_order")
 data class DragIntoOrderSection(
     override val id: String,
@@ -232,6 +317,7 @@ data class DragIntoOrderSection(
     @SerialName("difficulty_level") override val difficultyLevel: Int? = null,
     override val emoji: String? = null,
     @SerialName("image_ref") override val imageRef: Int? = null,
+    @SerialName("image_search") override val imageSearch: String? = null,
     override val grounding: Grounding? = null,
     val instruction: String,
     val items: List<Option>,
