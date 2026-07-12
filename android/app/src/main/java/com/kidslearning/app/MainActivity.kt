@@ -22,11 +22,14 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,19 +38,34 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kidslearning.app.data.local.AttemptEntity
 import com.kidslearning.app.data.local.BundledLessons
+import com.kidslearning.app.data.local.ConceptMasteryEntity
+import com.kidslearning.app.data.local.DatabaseProvider
+import com.kidslearning.app.data.local.LessonEntity
+import com.kidslearning.app.data.local.Prefs
+import com.kidslearning.app.data.remote.LessonJson
+import com.kidslearning.app.domain.model.AnswerResult
+import com.kidslearning.app.domain.model.ConceptMastery
 import com.kidslearning.app.domain.model.Lesson
+import com.kidslearning.app.domain.model.MasteryEngine
 import com.kidslearning.app.ui.child.LessonPlayerScreen
 import com.kidslearning.app.ui.child.Tts
+import com.kidslearning.app.ui.parent.ParentGate
+import com.kidslearning.app.ui.parent.ParentScreen
+import com.kidslearning.app.ui.parent.PreviewScreen
 import com.kidslearning.app.ui.theme.KidsTheme
 import com.kidslearning.app.ui.theme.Workbook
 import com.kidslearning.app.ui.theme.subjectEmoji
 import com.kidslearning.app.ui.theme.subjectGradient
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 /**
- * Entry point. The home screen follows the same workbook pattern as the player:
- * blue header bar with a coral badge, one white card holding a lean lesson list.
- * Parent mode (create/preview/approve, PIN gate) mounts here next.
+ * Entry point and navigation. Child mode is the default; parent mode sits behind
+ * an adult gate and is where lessons are created (via the backend), reviewed, and
+ * approved. Approved lessons join the bundled ones in the child's list. Progress
+ * and per-concept mastery persist to Room on every answer.
  */
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,31 +83,136 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+private sealed interface Screen {
+    data object Home : Screen
+    data class Playing(val lesson: Lesson) : Screen
+    data object Gate : Screen
+    data object Parent : Screen
+    data class Preview(val lesson: Lesson) : Screen
+}
+
 @Composable
 private fun App() {
     val context = LocalContext.current
-    val lessons = remember { BundledLessons.load(context) }
-    var active by remember { mutableStateOf<Lesson?>(null) }
+    val db = remember { DatabaseProvider.get(context) }
+    val prefs = remember { Prefs(context) }
+    val scope = rememberCoroutineScope()
+
+    val bundled = remember { BundledLessons.load(context) }
+    val stored by db.lessonDao().observeLessons().collectAsState(initial = emptyList())
+    val generated = remember(stored) {
+        stored.filter { it.approved }.mapNotNull { entity ->
+            runCatching { LessonJson.decode(entity.lessonJson) }.getOrNull()
+        }
+    }
+    val lessons = remember(generated) {
+        (bundled + generated).distinctBy { it.lessonId }
+    }
+    val solvedCounts by db.progressDao().observeSolvedCounts()
+        .collectAsState(initial = emptyList())
+    val solvedByLesson = remember(solvedCounts) {
+        solvedCounts.associate { it.lessonId to it.solved }
+    }
+
+    var screen by remember { mutableStateOf<Screen>(Screen.Home) }
 
     val tts = remember { Tts(context, "en") }
     DisposableEffect(Unit) { onDispose { tts.shutdown() } }
 
-    val current = active
-    if (current == null) {
-        HomeScreen(lessons, onOpen = { active = it })
-    } else {
-        LessonPlayerScreen(
-            lesson = current,
+    fun persistResult(lesson: Lesson, result: AnswerResult) {
+        scope.launch(Dispatchers.IO) {
+            val now = System.currentTimeMillis()
+            db.progressDao().insertAttempt(
+                AttemptEntity(
+                    lessonId = lesson.lessonId,
+                    sectionId = result.sectionId,
+                    conceptId = result.conceptId,
+                    correct = result.correct,
+                    attempts = result.attempts,
+                    usedHint = result.usedHint,
+                    timeSpentMs = 0,
+                    answeredAt = now,
+                )
+            )
+            val conceptId = result.conceptId ?: return@launch
+            val current = db.progressDao().getMastery(lesson.lessonId, conceptId)
+                ?.let { ConceptMastery(it.conceptId, it.mastery, it.consecutiveCorrect, it.consecutiveWrong) }
+                ?: MasteryEngine.initial(conceptId)
+            val updated = MasteryEngine.update(current, result)
+            db.progressDao().upsertMastery(
+                ConceptMasteryEntity(
+                    lessonId = lesson.lessonId,
+                    conceptId = updated.conceptId,
+                    mastery = updated.mastery,
+                    consecutiveCorrect = updated.consecutiveCorrect,
+                    consecutiveWrong = updated.consecutiveWrong,
+                    updatedAt = now,
+                )
+            )
+        }
+    }
+
+    when (val current = screen) {
+        is Screen.Home -> HomeScreen(
+            lessons = lessons,
+            solvedByLesson = solvedByLesson,
+            onOpen = { screen = Screen.Playing(it) },
+            onParent = { screen = Screen.Gate },
+        )
+
+        is Screen.Playing -> LessonPlayerScreen(
+            lesson = current.lesson,
             speak = tts::speak,
-            onExit = { active = null },
+            onExit = { screen = Screen.Home },
+            onResult = { persistResult(current.lesson, it) },
+        )
+
+        is Screen.Gate -> ParentGate(
+            onUnlock = { screen = Screen.Parent },
+            onCancel = { screen = Screen.Home },
+        )
+
+        is Screen.Parent -> ParentScreen(
+            prefs = prefs,
+            onPreview = { screen = Screen.Preview(it) },
+            onExit = { screen = Screen.Home },
+        )
+
+        is Screen.Preview -> PreviewScreen(
+            lesson = current.lesson,
+            onApprove = {
+                scope.launch(Dispatchers.IO) {
+                    val now = System.currentTimeMillis()
+                    db.lessonDao().upsertLesson(
+                        LessonEntity(
+                            lessonId = current.lesson.lessonId,
+                            version = 1,
+                            title = current.lesson.title,
+                            subject = current.lesson.subject,
+                            age = current.lesson.age,
+                            approved = true,
+                            schemaVersion = current.lesson.schemaVersion,
+                            lessonJson = LessonJson.encode(current.lesson),
+                            createdAt = now,
+                            updatedAt = now,
+                        )
+                    )
+                }
+                screen = Screen.Home
+            },
+            onDiscard = { screen = Screen.Parent },
         )
     }
 }
 
 @Composable
-private fun HomeScreen(lessons: List<Lesson>, onOpen: (Lesson) -> Unit) {
+private fun HomeScreen(
+    lessons: List<Lesson>,
+    solvedByLesson: Map<String, Int>,
+    onOpen: (Lesson) -> Unit,
+    onParent: () -> Unit,
+) {
     Column(modifier = Modifier.fillMaxSize().background(Workbook.PageBackground)) {
-        // Same header pattern as the lesson player.
         Surface(
             color = Workbook.Blue,
             shape = RoundedCornerShape(bottomStart = 18.dp, bottomEnd = 18.dp),
@@ -97,16 +220,16 @@ private fun HomeScreen(lessons: List<Lesson>, onOpen: (Lesson) -> Unit) {
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
             ) {
                 Surface(
                     color = Workbook.Coral,
                     shape = MaterialTheme.shapes.small,
-                    modifier = Modifier.size(36.dp),
+                    modifier = Modifier.size(34.dp),
                 ) {
-                    Box(contentAlignment = Alignment.Center) { Text("📚", fontSize = 18.sp) }
+                    Box(contentAlignment = Alignment.Center) { Text("📚", fontSize = 17.sp) }
                 }
-                Column(modifier = Modifier.padding(start = 12.dp)) {
+                Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
                     Text(
                         "Kids Learning",
                         style = MaterialTheme.typography.titleMedium,
@@ -117,6 +240,9 @@ private fun HomeScreen(lessons: List<Lesson>, onOpen: (Lesson) -> Unit) {
                         style = MaterialTheme.typography.labelMedium,
                         color = Color.White.copy(alpha = 0.85f),
                     )
+                }
+                TextButton(onClick = onParent) {
+                    Text("Parent", color = Color.White)
                 }
             }
         }
@@ -139,14 +265,14 @@ private fun HomeScreen(lessons: List<Lesson>, onOpen: (Lesson) -> Unit) {
                     modifier = Modifier.padding(vertical = 8.dp),
                 )
                 lessons.forEachIndexed { index, lesson ->
-                    LessonRow(lesson, onOpen)
+                    LessonRow(lesson, solvedByLesson[lesson.lessonId], onOpen)
                     if (index < lessons.size - 1) {
                         HorizontalDivider(color = Workbook.PageBackground, thickness = 1.5.dp)
                     }
                 }
                 if (lessons.isEmpty()) {
                     Text(
-                        "No lessons found in the bundle.",
+                        "No lessons yet. A grown-up can create one in Parent mode.",
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(vertical = 12.dp),
                     )
@@ -158,7 +284,7 @@ private fun HomeScreen(lessons: List<Lesson>, onOpen: (Lesson) -> Unit) {
 }
 
 @Composable
-private fun LessonRow(lesson: Lesson, onOpen: (Lesson) -> Unit) {
+private fun LessonRow(lesson: Lesson, solved: Int?, onOpen: (Lesson) -> Unit) {
     Surface(
         onClick = { onOpen(lesson) },
         color = Color.Transparent,
@@ -181,9 +307,10 @@ private fun LessonRow(lesson: Lesson, onOpen: (Lesson) -> Unit) {
             }
             Column(modifier = Modifier.weight(1f).padding(horizontal = 12.dp)) {
                 Text(lesson.title, style = MaterialTheme.typography.titleMedium, maxLines = 2)
+                val progress = solved?.let { " · ✓ $it solved" }.orEmpty()
                 Text(
                     "${lesson.subject} · age ${lesson.age} · ${lesson.sections.size} steps · " +
-                        "${lesson.estimatedDurationMinutes ?: 10} min",
+                        "${lesson.estimatedDurationMinutes ?: 10} min" + progress,
                     style = MaterialTheme.typography.labelMedium,
                     color = Workbook.TextMuted,
                     modifier = Modifier.padding(top = 2.dp),

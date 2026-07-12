@@ -73,6 +73,7 @@ fun LessonPlayerScreen(
     lesson: Lesson,
     speak: (String) -> Unit,
     onExit: () -> Unit,
+    onResult: (AnswerResult) -> Unit = {},
 ) {
     val pages = remember(lesson.lessonId) { buildPages(lesson.sections) }
     val activityNumbers = remember(lesson.lessonId) {
@@ -135,6 +136,7 @@ fun LessonPlayerScreen(
                                     result,
                                 )
                             }
+                            onResult(result) // persistence hook
                         },
                     )
                     if (i < page.size - 1 && section is Activity) {

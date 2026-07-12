@@ -24,6 +24,9 @@ interface LessonDao {
     suspend fun approve(id: String, now: Long)
 }
 
+/** Per-lesson count of distinct correctly-solved activities, for the home list. */
+data class SolvedCount(val lessonId: String, val solved: Int)
+
 @Dao
 interface ProgressDao {
     @Insert
@@ -32,11 +35,20 @@ interface ProgressDao {
     @Upsert
     suspend fun upsertMastery(mastery: ConceptMasteryEntity)
 
+    @Query("SELECT * FROM concept_mastery WHERE lessonId = :lessonId AND conceptId = :conceptId")
+    suspend fun getMastery(lessonId: String, conceptId: String): ConceptMasteryEntity?
+
     @Query("SELECT * FROM concept_mastery WHERE lessonId = :lessonId")
     fun observeMastery(lessonId: String): Flow<List<ConceptMasteryEntity>>
 
     @Query("SELECT * FROM concept_mastery WHERE lessonId = :lessonId AND mastery < 0.5")
     suspend fun weakConcepts(lessonId: String): List<ConceptMasteryEntity>
+
+    @Query(
+        "SELECT lessonId, COUNT(DISTINCT sectionId) AS solved FROM attempts " +
+            "WHERE correct = 1 GROUP BY lessonId"
+    )
+    fun observeSolvedCounts(): Flow<List<SolvedCount>>
 }
 
 @Dao
