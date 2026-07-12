@@ -13,9 +13,10 @@ import androidx.compose.ui.composed
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
-import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.zIndex
 
 /**
@@ -67,52 +68,42 @@ fun Modifier.dragSource(
                 shadowElevation = 18f
             }
         }
-        .pointerInputDrag(id, longPress,
-            onStart = { start ->
+        .pointerInput(id, longPress) {
+            val onStart: (Offset) -> Unit = { start ->
                 state.draggingId = id
                 delta = Offset.Zero
                 pointer = origin + start
                 onPickUp()
-            },
-            onMove = { amount ->
+            }
+            val onMove: (Offset) -> Unit = { amount ->
                 delta += amount
                 pointer += amount
-            },
-            onEnd = {
+            }
+            val onEnd: () -> Unit = {
                 val hit = state.targets.entries
                     .firstOrNull { it.value.contains(pointer) }?.key
                 state.draggingId = null
                 delta = Offset.Zero
                 onDrop(hit)
-            },
-            onCancel = {
+            }
+            val onCancel: () -> Unit = {
                 state.draggingId = null
                 delta = Offset.Zero
-            },
-        )
-}
-
-private fun Modifier.pointerInputDrag(
-    key: Any?,
-    longPress: Boolean,
-    onStart: (Offset) -> Unit,
-    onMove: (Offset) -> Unit,
-    onEnd: () -> Unit,
-    onCancel: () -> Unit,
-): Modifier = androidx.compose.ui.input.pointer.pointerInput(key, longPress) {
-    if (longPress) {
-        detectDragGesturesAfterLongPress(
-            onDragStart = onStart,
-            onDrag = { change, amount -> change.consume(); onMove(amount) },
-            onDragEnd = onEnd,
-            onDragCancel = onCancel,
-        )
-    } else {
-        detectDragGestures(
-            onDragStart = onStart,
-            onDrag = { change, amount -> change.consume(); onMove(amount) },
-            onDragEnd = onEnd,
-            onDragCancel = onCancel,
-        )
-    }
+            }
+            if (longPress) {
+                detectDragGesturesAfterLongPress(
+                    onDragStart = onStart,
+                    onDrag = { change, amount -> change.consume(); onMove(amount) },
+                    onDragEnd = onEnd,
+                    onDragCancel = onCancel,
+                )
+            } else {
+                detectDragGestures(
+                    onDragStart = onStart,
+                    onDrag = { change, amount -> change.consume(); onMove(amount) },
+                    onDragEnd = onEnd,
+                    onDragCancel = onCancel,
+                )
+            }
+        }
 }
