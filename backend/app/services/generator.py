@@ -22,10 +22,25 @@ _REPO_ROOT = Path(__file__).resolve().parents[3]
 _SCHEMA_PATH = _REPO_ROOT / "lesson-schema" / "lesson.schema.json"
 
 
+def _strip_tool_hostile_keywords(node):
+    """Remove schema keywords the API's tool-following handles poorly
+    (unevaluatedProperties, document identifiers). Their strictness is enforced by
+    the deterministic validator on the result instead."""
+    if isinstance(node, dict):
+        return {
+            k: _strip_tool_hostile_keywords(v)
+            for k, v in node.items()
+            if k not in ("unevaluatedProperties", "$id", "$schema")
+        }
+    if isinstance(node, list):
+        return [_strip_tool_hostile_keywords(x) for x in node]
+    return node
+
+
 @lru_cache(maxsize=1)
 def _lesson_schema() -> dict:
     with _SCHEMA_PATH.open(encoding="utf-8") as fh:
-        return json.load(fh)
+        return _strip_tool_hostile_keywords(json.load(fh))
 
 
 @dataclass

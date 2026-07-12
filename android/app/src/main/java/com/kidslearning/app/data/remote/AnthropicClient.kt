@@ -99,8 +99,13 @@ class AnthropicClient(private val apiKey: String) {
             if (code == 429) throw IOException("Rate limited — wait a moment and try again.")
             if (code !in 200..299) throw IOException("API error HTTP $code: ${text.take(300)}")
 
-            val content = LessonJson.codec.parseToJsonElement(text)
-                .jsonObject["content"]?.jsonArray
+            val root = LessonJson.codec.parseToJsonElement(text).jsonObject
+            if (root["stop_reason"]?.jsonPrimitive?.content == "max_tokens") {
+                throw IOException(
+                    "The lesson was too long and got cut off — try fewer questions or fewer pages."
+                )
+            }
+            val content = root["content"]?.jsonArray
                 ?: throw IOException("Unexpected API response shape.")
             val toolUse = content.firstOrNull {
                 it.jsonObject["type"]?.jsonPrimitive?.content == "tool_use"

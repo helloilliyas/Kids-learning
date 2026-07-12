@@ -3,8 +3,17 @@ package com.kidslearning.app.data.remote
 import android.content.Context
 import com.kidslearning.app.domain.model.Lesson
 import com.kidslearning.app.domain.model.LessonChecks
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.add
+import kotlinx.serialization.json.addJsonObject
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonArray
 
 /**
  * On-device lesson generation for personal-use mode: the same two-stage pipeline
@@ -43,28 +52,144 @@ class DirectGenerator(apiKey: String, private val context: Context) {
         )
 
         // Stage 2: turn the plan into a full lesson conforming to the shared schema.
-        val lessonJson = client.generateStructured(
+        val rawLesson = client.generateStructured(
             model = AnthropicClient.MODEL_STRONG,
             system = LESSON_SYSTEM,
             prompt = lessonPrompt(plan.toString(), topic, subject, age, objective, numQuestions, language),
             schema = lessonSchema(),
             images = images,
-            maxTokens = 8192,
+            maxTokens = 16384,
         )
 
-        val lesson = runCatching {
-            LessonJson.codec.decodeFromJsonElement(Lesson.serializer(), lessonJson)
-        }.getOrElse { failure ->
-            return DirectResult(null, listOf("The lesson did not match the schema: ${failure.message?.take(200)}"))
+        // Recover the recoverable: unwrap, fill known metadata, derive concepts.
+        var candidate = normalize(rawLesson, topic, subject, age, objective, language)
+        var lesson = tryDecode(candidate)
+
+        if (lesson == null) {
+            // One repair pass: show the model its own output and the exact failure.
+            val problem = decodeFailure(candidate) ?: "unknown validation problem"
+            val repaired = client.generateStructured(
+                model = AnthropicClient.MODEL_STRONG,
+                system = LESSON_SYSTEM,
+                prompt = repairPrompt(rawLesson.toString(), problem),
+                schema = lessonSchema(),
+                maxTokens = 16384,
+            )
+            candidate = normalize(repaired, topic, subject, age, objective, language)
+            lesson = tryDecode(candidate)
+                ?: return DirectResult(
+                    null,
+                    listOf("The AI produced an invalid lesson twice: ${decodeFailure(candidate)?.take(200)}"),
+                )
         }
 
         return DirectResult(lesson, LessonChecks.validate(lesson, images.size))
     }
 
-    /** The shared lesson JSON Schema, bundled as an asset — one contract everywhere. */
+    private fun tryDecode(candidate: JsonObject): Lesson? = runCatching {
+        LessonJson.codec.decodeFromJsonElement(Lesson.serializer(), candidate)
+    }.getOrNull()
+
+    private fun decodeFailure(candidate: JsonObject): String? = runCatching {
+        LessonJson.codec.decodeFromJsonElement(Lesson.serializer(), candidate)
+    }.exceptionOrNull()?.message
+
+    /**
+     * Make the model's output decodable wherever that is safe to do mechanically:
+     * unwrap a nested {"lesson": {...}} shape, always assign a fresh unique
+     * lesson_id (prevents a generated id colliding with a saved lesson), fill
+     * metadata we already know from the form, and derive the concepts list from
+     * the sections if the model forgot it. Anything pedagogical stays untouched --
+     * real content problems still fail into the repair pass.
+     */
+    private fun normalize(
+        raw: JsonObject, topic: String, subject: String,
+        age: Int, objective: String, language: String,
+    ): JsonObject {
+        var obj = raw
+        if ("sections" !in obj) {
+            obj.values.filterIsInstance<JsonObject>()
+                .firstOrNull { "sections" in it }
+                ?.let { obj = it }
+        }
+        val sections = obj["sections"] as? JsonArray
+
+        return buildJsonObject {
+            obj.forEach { (key, value) ->
+                if (key !in setOf("schema_version", "lesson_id", "age")) put(key, value)
+            }
+            put("schema_version", "1.0")
+            put("lesson_id", "gen_${System.currentTimeMillis()}")
+            put("age", age)
+            if ("title" !in obj) put("title", topic)
+            if ("subject" !in obj) put("subject", subject)
+            if ("language" !in obj) put("language", language)
+            if ("difficulty" !in obj) put("difficulty", "beginner")
+            if ("completion_message" !in obj) {
+                put("completion_message", "Great job — you finished the lesson! 🎉")
+            }
+            if ("learning_objectives" !in obj) {
+                putJsonArray("learning_objectives") {
+                    add(JsonPrimitive(objective.ifBlank { "Learn about $topic" }))
+                }
+            }
+            val hasConcepts = (obj["concepts"] as? JsonArray)?.isNotEmpty() == true
+            if (!hasConcepts) {
+                val conceptIds = sections
+                    ?.mapNotNull { (it as? JsonObject)?.get("concept_id") }
+                    ?.mapNotNull { (it as? JsonPrimitive)?.content }
+                    ?.distinct()
+                    .orEmpty()
+                    .ifEmpty { listOf("main_idea") }
+                putJsonArray("concepts") {
+                    conceptIds.forEach { id ->
+                        addJsonObject {
+                            put("concept_id", id)
+                            put("name", id.replace('_', ' ')
+                                .replaceFirstChar { c -> c.uppercase() })
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun repairPrompt(badJson: String, problem: String) = """
+        The lesson JSON below failed validation with this problem:
+        $problem
+
+        Return the complete corrected lesson object via the tool. Keep all the
+        teaching content, fix only the structure: every required field present,
+        every section following the schema exactly (correct "type" values, all
+        required per-type fields, hint / correct_feedback / incorrect_feedback on
+        every activity).
+
+        INVALID LESSON JSON:
+        $badJson
+    """.trimIndent()
+
+    /**
+     * The shared lesson JSON Schema, bundled as an asset — one contract everywhere.
+     * Keywords the API's tool-following handles poorly (unevaluatedProperties,
+     * document identifiers) are stripped; the strictness they encode is enforced
+     * by decoding + LessonChecks on the result instead.
+     */
     private fun lessonSchema(): JsonObject =
         context.assets.open("lesson.schema.json").bufferedReader().use { it.readText() }
-            .let { LessonJson.codec.parseToJsonElement(it).jsonObject }
+            .let { LessonJson.codec.parseToJsonElement(it) }
+            .let(::sanitizeSchema).jsonObject
+
+    private fun sanitizeSchema(element: JsonElement): JsonElement = when (element) {
+        is JsonObject -> buildJsonObject {
+            element.forEach { (key, value) ->
+                if (key !in setOf("unevaluatedProperties", "${'$'}schema", "${'$'}id")) {
+                    put(key, sanitizeSchema(value))
+                }
+            }
+        }
+        is JsonArray -> buildJsonArray { element.forEach { add(sanitizeSchema(it)) } }
+        else -> element
+    }
 
     private fun planSchema(): JsonObject = LessonJson.codec.parseToJsonElement(
         """
