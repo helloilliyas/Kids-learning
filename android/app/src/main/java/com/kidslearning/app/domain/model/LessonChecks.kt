@@ -74,6 +74,25 @@ object LessonChecks {
                     }
                 }
                 is TrueFalseSection -> activityCount++
+                is BuildBarChartSection -> {
+                    activityCount++
+                    section.items.forEach {
+                        if (it.target !in 0..section.maxValue) {
+                            errors += "[$sid] bar target ${it.target} exceeds max ${section.maxValue}."
+                        }
+                    }
+                }
+                is ChartSection -> {
+                    if (section.chartType == "pictograph") {
+                        val symbol = section.symbolValue.coerceAtLeast(1)
+                        if (section.items.any { it.value % symbol != 0 }) {
+                            errors += "[$sid] pictograph values must be multiples of symbol_value."
+                        }
+                        if (section.items.any { it.emoji.isNullOrBlank() }) {
+                            errors += "[$sid] every pictograph item needs an emoji symbol."
+                        }
+                    }
+                }
                 is ExplanationSection -> Unit
             }
 
@@ -83,6 +102,8 @@ object LessonChecks {
                 is FillInTheBlankSection -> section.template
                 is MatchPairsSection -> section.instruction
                 is DragIntoOrderSection -> section.instruction
+                is BuildBarChartSection -> section.instruction
+                is ChartSection -> null
                 is ExplanationSection -> null
             }?.lowercase()?.replace(Regex("[^a-z0-9 ]"), "")?.trim()
             if (!questionText.isNullOrBlank() && !seenQuestions.add(questionText)) {

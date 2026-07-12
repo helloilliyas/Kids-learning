@@ -160,12 +160,88 @@
     "section": {
       "oneOf": [
         { "$ref": "#/$defs/explanation" },
+        { "$ref": "#/$defs/chart" },
         { "$ref": "#/$defs/multipleChoice" },
         { "$ref": "#/$defs/trueFalse" },
         { "$ref": "#/$defs/fillInTheBlank" },
         { "$ref": "#/$defs/matchPairs" },
-        { "$ref": "#/$defs/dragIntoOrder" }
+        { "$ref": "#/$defs/dragIntoOrder" },
+        { "$ref": "#/$defs/buildBarChart" }
       ]
+    },
+    "chartItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label", "value"],
+      "properties": {
+        "label": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "value": { "type": "integer", "minimum": 0, "maximum": 1000 },
+        "emoji": { "type": "string", "maxLength": 16 }
+      }
+    },
+    "chart": {
+      "allOf": [{ "$ref": "#/$defs/sectionBase" }],
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": ["title", "chart_type", "items"],
+      "description": "A data visual the app renders natively (no image needed): a colourful bar chart or an emoji pictograph. Prefer recreating a graph from the source as a chart over attaching its photo.",
+      "properties": {
+        "type": { "const": "chart" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "chart_type": { "enum": ["bar", "pictograph"] },
+        "items": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 8,
+          "items": { "$ref": "#/$defs/chartItem" }
+        },
+        "unit": {
+          "type": "string",
+          "maxLength": 30,
+          "description": "What the values count, e.g. 'muffins'."
+        },
+        "symbol_value": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Pictograph key: one symbol equals this many. Item emojis are the symbols."
+        }
+      }
+    },
+    "buildBarChart": {
+      "allOf": [
+        { "$ref": "#/$defs/sectionBase" },
+        { "$ref": "#/$defs/activityFeedback" }
+      ],
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": ["instruction", "items", "max_value"],
+      "description": "Interactive graphing: the child drags each bar to the target height (like completing a bar graph in a workbook).",
+      "properties": {
+        "type": { "const": "build_bar_chart" },
+        "instruction": { "type": "string", "minLength": 1, "maxLength": 300 },
+        "items": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 6,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["label", "target"],
+            "properties": {
+              "label": { "type": "string", "minLength": 1, "maxLength": 40 },
+              "target": { "type": "integer", "minimum": 0, "maximum": 100 },
+              "emoji": { "type": "string", "maxLength": 16 }
+            }
+          }
+        },
+        "max_value": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Top of the axis; every target must fit within it."
+        },
+        "step": { "type": "integer", "minimum": 1, "default": 1 }
+      }
     },
     "explanation": {
       "allOf": [{ "$ref": "#/$defs/sectionBase" }],

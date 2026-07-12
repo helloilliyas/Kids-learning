@@ -177,6 +177,54 @@ data class MatchPairsSection(
 }
 
 @Serializable
+@SerialName("chart")
+data class ChartSection(
+    override val id: String,
+    @SerialName("concept_id") override val conceptId: String? = null,
+    @SerialName("difficulty_level") override val difficultyLevel: Int? = null,
+    override val emoji: String? = null,
+    @SerialName("image_ref") override val imageRef: Int? = null,
+    override val grounding: Grounding? = null,
+    val title: String,
+    @SerialName("chart_type") val chartType: String, // bar | pictograph
+    val items: List<ChartItem>,
+    val unit: String? = null,
+    @SerialName("symbol_value") val symbolValue: Int = 1,
+) : Section {
+    @Serializable
+    data class ChartItem(
+        val label: String,
+        val value: Int,
+        val emoji: String? = null,
+    )
+}
+
+@Serializable
+@SerialName("build_bar_chart")
+data class BuildBarChartSection(
+    override val id: String,
+    @SerialName("concept_id") override val conceptId: String? = null,
+    @SerialName("difficulty_level") override val difficultyLevel: Int? = null,
+    override val emoji: String? = null,
+    @SerialName("image_ref") override val imageRef: Int? = null,
+    override val grounding: Grounding? = null,
+    val instruction: String,
+    val items: List<BarTarget>,
+    @SerialName("max_value") val maxValue: Int,
+    val step: Int = 1,
+    override val hint: String,
+    @SerialName("correct_feedback") override val correctFeedback: String,
+    @SerialName("incorrect_feedback") override val incorrectFeedback: String,
+) : Activity {
+    @Serializable
+    data class BarTarget(
+        val label: String,
+        val target: Int,
+        val emoji: String? = null,
+    )
+}
+
+@Serializable
 @SerialName("drag_into_order")
 data class DragIntoOrderSection(
     override val id: String,

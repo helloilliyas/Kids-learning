@@ -22,6 +22,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.kidslearning.app.domain.model.Activity
+import com.kidslearning.app.domain.model.BuildBarChartSection
+import com.kidslearning.app.domain.model.ChartSection
 import com.kidslearning.app.domain.model.ExplanationSection
 import com.kidslearning.app.domain.model.FillInTheBlankSection
 import com.kidslearning.app.domain.model.DragIntoOrderSection
@@ -121,6 +123,8 @@ fun PreviewScreen(
 
 private fun sectionKind(section: Section): String = when (section) {
     is ExplanationSection -> "Explanation"
+    is ChartSection -> if (section.chartType == "pictograph") "Pictograph" else "Bar chart"
+    is BuildBarChartSection -> "Build a bar chart"
     is MultipleChoiceSection ->
         if (section.selectionMode == "multiple") "Multiple selection" else "Multiple choice"
     is TrueFalseSection -> "True or false"
@@ -131,6 +135,9 @@ private fun sectionKind(section: Section): String = when (section) {
 
 private fun sectionText(section: Section): String = when (section) {
     is ExplanationSection -> "${section.title} — ${section.content}"
+    is ChartSection -> section.title + ": " +
+        section.items.joinToString { "${it.label} ${it.value}" }
+    is BuildBarChartSection -> section.instruction
     is MultipleChoiceSection -> section.question
     is TrueFalseSection -> section.statement
     is FillInTheBlankSection -> section.template.replace(Regex("\\{\\{[^}]+\\}\\}"), "____")
@@ -148,5 +155,6 @@ private fun answerSummary(section: Section): String? = when (section) {
         val byId = section.items.associateBy { it.id }
         section.correctOrder.mapNotNull { byId[it]?.text }.joinToString(" → ")
     }
+    is BuildBarChartSection -> section.items.joinToString { "${it.label}: ${it.target}" }
     else -> null
 }

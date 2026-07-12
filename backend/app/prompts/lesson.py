@@ -45,6 +45,14 @@ Quality rules you must follow:
   the child has to SEE it to answer. Use "image_description" ONLY for things NOT
   visible in any uploaded image, and never set both on the same section. Only
   reference images that were actually provided; never invent an index.
+- You can CREATE data visuals natively — no image needed. Use a "chart" section
+  (chart_type "bar" or "pictograph"; items with label/value/emoji; for
+  pictographs set symbol_value and give every item an emoji symbol, with each
+  value a multiple of symbol_value) to present data as a colourful graph, then
+  ask questions about it. PREFER recreating a graph from the source as a chart
+  section over attaching its photo — it is clearer for the child. Use the
+  "build_bar_chart" activity (items with label/target, plus max_value) to let
+  the child BUILD a graph by dragging bars to the right heights.
 - Give every section a relevant "emoji" (e.g. ☀️ for evaporation) and add an
   "emoji" to options where a picture helps (especially for young children). The
   emoji is the visual for that content. NEVER use an emoji that reveals the
@@ -134,9 +142,9 @@ Aim for about {num_questions} interactive activities.
 Structure the lesson as: a short introduction, then alternating explanation cards
 and activities that build from difficulty_level 1 upward, ending with a challenge
 activity and a warm completion_message. Use only these section types:
-explanation, multiple_choice, true_false, fill_in_the_blank, match_pairs,
-drag_into_order. Give every section a unique snake_case id. Every activity must
-reference a concept_id declared in the concepts list.
+explanation, chart, multiple_choice, true_false, fill_in_the_blank, match_pairs,
+drag_into_order, build_bar_chart. Give every section a unique snake_case id.
+Every activity must reference a concept_id declared in the concepts list.
 
 TEACHING PLAN:
 \"\"\"

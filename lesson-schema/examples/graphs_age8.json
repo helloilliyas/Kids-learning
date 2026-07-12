@@ -1,0 +1,119 @@
+{
+  "schema_version": "1.0",
+  "lesson_id": "lesson_graphs_001",
+  "title": "Reading and Building Graphs",
+  "subject": "Maths",
+  "language": "en",
+  "age": 8,
+  "difficulty": "beginner",
+  "estimated_duration_minutes": 10,
+  "learning_objectives": [
+    "Read a pictograph using its key",
+    "Read a bar chart",
+    "Build a bar chart from data"
+  ],
+  "concepts": [
+    { "concept_id": "pictographs", "name": "Pictographs" },
+    { "concept_id": "bar_charts", "name": "Bar charts" }
+  ],
+  "source_references": [],
+  "sections": [
+    {
+      "id": "intro",
+      "type": "explanation",
+      "concept_id": "pictographs",
+      "difficulty_level": 1,
+      "emoji": "📊",
+      "title": "Graphs tell stories with pictures",
+      "content": "A graph shows numbers as a picture, so you can compare things at a glance. Today we will read a pictograph, read a bar chart, and even build one ourselves!",
+      "grounding": { "basis": "general_knowledge" }
+    },
+    {
+      "id": "muffin_pictograph",
+      "type": "chart",
+      "concept_id": "pictographs",
+      "difficulty_level": 1,
+      "emoji": "🧁",
+      "chart_type": "pictograph",
+      "title": "Muffins sold at the bake sale",
+      "unit": "muffins",
+      "symbol_value": 2,
+      "items": [
+        { "label": "Chocolate", "value": 8, "emoji": "🧁" },
+        { "label": "Blueberry", "value": 6, "emoji": "🧁" },
+        { "label": "Raisin", "value": 4, "emoji": "🧁" },
+        { "label": "Carrot", "value": 2, "emoji": "🧁" }
+      ],
+      "grounding": { "basis": "general_knowledge" }
+    },
+    {
+      "id": "q_key",
+      "type": "multiple_choice",
+      "concept_id": "pictographs",
+      "difficulty_level": 2,
+      "emoji": "🔑",
+      "selection_mode": "single",
+      "question": "Each 🧁 symbol means 2 muffins. How many chocolate muffins were sold?",
+      "options": [
+        { "id": "a", "text": "8 muffins" },
+        { "id": "b", "text": "4 muffins" },
+        { "id": "c", "text": "2 muffins" }
+      ],
+      "correct_answer_ids": ["a"],
+      "hint": "Count the chocolate symbols, then multiply by 2 — check the key!",
+      "correct_feedback": "Yes! 4 symbols × 2 muffins each = 8 chocolate muffins.",
+      "incorrect_feedback": "Careful — each symbol stands for 2 muffins, not 1. Chocolate has 4 symbols, so 4 × 2 = 8.",
+      "grounding": { "basis": "general_knowledge" }
+    },
+    {
+      "id": "pets_bar_chart",
+      "type": "chart",
+      "concept_id": "bar_charts",
+      "difficulty_level": 2,
+      "emoji": "🐾",
+      "chart_type": "bar",
+      "title": "Pets in our class",
+      "unit": "children",
+      "items": [
+        { "label": "Dogs", "value": 7, "emoji": "🐶" },
+        { "label": "Cats", "value": 5, "emoji": "🐱" },
+        { "label": "Fish", "value": 3, "emoji": "🐟" },
+        { "label": "Birds", "value": 2, "emoji": "🐦" }
+      ],
+      "grounding": { "basis": "general_knowledge" }
+    },
+    {
+      "id": "q_bar_read",
+      "type": "true_false",
+      "concept_id": "bar_charts",
+      "difficulty_level": 2,
+      "emoji": "🐶",
+      "statement": "More children have dogs than cats.",
+      "correct_answer": true,
+      "hint": "Compare the heights of the Dogs bar and the Cats bar.",
+      "correct_feedback": "Right! The Dogs bar (7) is taller than the Cats bar (5).",
+      "incorrect_feedback": "Look again: the Dogs bar reaches 7 and the Cats bar reaches 5, so dogs win.",
+      "grounding": { "basis": "general_knowledge" }
+    },
+    {
+      "id": "build_fruit_chart",
+      "type": "build_bar_chart",
+      "concept_id": "bar_charts",
+      "difficulty_level": 3,
+      "emoji": "🍎",
+      "instruction": "The fruit stall sold 6 apples, 4 bananas, and 8 oranges. Drag each bar to the right height!",
+      "max_value": 10,
+      "step": 1,
+      "items": [
+        { "label": "Apples", "target": 6, "emoji": "🍎" },
+        { "label": "Bananas", "target": 4, "emoji": "🍌" },
+        { "label": "Oranges", "target": 8, "emoji": "🍊" }
+      ],
+      "hint": "Read each number in the story and slide that bar up until it matches.",
+      "correct_feedback": "Perfect graph! You showed 6 apples, 4 bananas, and 8 oranges.",
+      "incorrect_feedback": "Check each bar against the story: apples 6, bananas 4, oranges 8.",
+      "grounding": { "basis": "general_knowledge" }
+    }
+  ],
+  "completion_message": "Amazing! You can read pictographs, read bar charts, and even build your own graph!"
+}

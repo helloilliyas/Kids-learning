@@ -2,6 +2,8 @@ package com.kidslearning.app.ui.renderers
 
 import androidx.compose.runtime.Composable
 import com.kidslearning.app.domain.model.AnswerResult
+import com.kidslearning.app.domain.model.BuildBarChartSection
+import com.kidslearning.app.domain.model.ChartSection
 import com.kidslearning.app.domain.model.DragIntoOrderSection
 import com.kidslearning.app.domain.model.ExplanationSection
 import com.kidslearning.app.domain.model.FillInTheBlankSection
@@ -29,6 +31,8 @@ fun RenderSection(
 ) {
     when (section) {
         is ExplanationSection -> ExplanationCard(section, readAloud, speak)
+        is ChartSection -> ChartView(section, readAloud, speak)
+        is BuildBarChartSection -> BuildBarChartActivity(section, number, readAloud, speak, onAnswered)
         is MultipleChoiceSection -> MultipleChoiceActivity(section, number, readAloud, speak, onAnswered)
         is TrueFalseSection -> TrueFalseActivity(section, number, readAloud, speak, onAnswered)
         is FillInTheBlankSection -> FillInTheBlankActivity(section, number, readAloud, speak, onAnswered)

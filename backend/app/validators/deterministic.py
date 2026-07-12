@@ -26,14 +26,17 @@ from app.validators.age_profiles import AgeProfile, profile_for_age
 # rejected before it can reach a child's screen.
 SUPPORTED_TYPES = {
     "explanation",
+    "chart",
     "multiple_choice",
     "true_false",
     "fill_in_the_blank",
     "match_pairs",
     "drag_into_order",
+    "build_bar_chart",
 }
 
-ACTIVITY_TYPES = SUPPORTED_TYPES - {"explanation"}
+# Display-only sections teach; everything else is answered and scored.
+ACTIVITY_TYPES = SUPPORTED_TYPES - {"explanation", "chart"}
 
 _BLANK_MARKER = re.compile(r"\{\{([a-z0-9][a-z0-9_-]{0,63})\}\}")
 
@@ -112,6 +115,10 @@ def validate_lesson(lesson: dict) -> ValidationResult:
             _check_match_pairs(section, result)
         elif stype == "drag_into_order":
             _check_drag_into_order(section, result)
+        elif stype == "chart":
+            _check_chart(section, result)
+        elif stype == "build_bar_chart":
+            _check_build_bar_chart(section, result)
 
         _check_duplicate(section, seen_questions, result)
 
@@ -294,9 +301,46 @@ def _check_drag_into_order(section: dict, result: ValidationResult) -> None:
         )
 
 
+def _check_chart(section: dict, result: ValidationResult) -> None:
+    sid = section.get("id")
+    labels = [i["label"].strip().lower() for i in section.get("items", [])]
+    if len(set(labels)) != len(labels):
+        result.add("duplicate_chart_label", "Chart items repeat a label.", sid)
+    if section.get("chart_type") == "pictograph":
+        if not all(i.get("emoji") for i in section.get("items", [])):
+            result.add(
+                "pictograph_missing_emoji",
+                "Every pictograph item needs an emoji symbol.",
+                sid,
+            )
+        symbol_value = section.get("symbol_value", 1)
+        for item in section.get("items", []):
+            if item["value"] % symbol_value != 0:
+                result.add(
+                    "pictograph_partial_symbol",
+                    f"Value {item['value']} is not a multiple of symbol_value {symbol_value}.",
+                    sid,
+                )
+
+
+def _check_build_bar_chart(section: dict, result: ValidationResult) -> None:
+    sid = section.get("id")
+    max_value = section.get("max_value", 0)
+    for item in section.get("items", []):
+        if not (0 <= item.get("target", -1) <= max_value):
+            result.add(
+                "bar_target_out_of_range",
+                f"Target {item.get('target')} exceeds max_value {max_value}.",
+                sid,
+            )
+    labels = [i["label"].strip().lower() for i in section.get("items", [])]
+    if len(set(labels)) != len(labels):
+        result.add("duplicate_bar_label", "Bar items repeat a label.", sid)
+
+
 def _check_duplicate(section: dict, seen: dict[str, str], result: ValidationResult) -> None:
     text = _question_text(section)
-    if section.get("type") == "explanation" or not text:
+    if section.get("type") in ("explanation", "chart") or not text:
         return
     norm = _normalise_question(text)
     if not norm:
