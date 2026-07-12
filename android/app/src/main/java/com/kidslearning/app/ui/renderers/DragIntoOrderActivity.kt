@@ -81,8 +81,8 @@ fun DragIntoOrderActivity(
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text("🖐 Hold a card and drag it into place.", style = MaterialTheme.typography.labelLarge)
             order.forEachIndexed { position, itemId ->
-                key(itemId) {
-                    val item = byId[itemId] ?: return@key
+                val item = byId[itemId]
+                if (item != null) key(itemId) {
                     val isDragged = draggedId == itemId
                     val (container, accent) = OptionPalette[
                         section.items.indexOfFirst { it.id == itemId } % OptionPalette.size]
