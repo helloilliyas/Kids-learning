@@ -1,0 +1,133 @@
+{
+  "schema_version": "1.0",
+  "lesson_id": "lesson_fractions_001",
+  "title": "Adding Fractions with Different Denominators",
+  "subject": "Maths",
+  "language": "en",
+  "age": 12,
+  "difficulty": "intermediate",
+  "estimated_duration_minutes": 18,
+  "learning_objectives": [
+    "Explain why fractions need a common denominator before adding",
+    "Find the least common denominator of two fractions",
+    "Add two fractions with different denominators"
+  ],
+  "concepts": [
+    { "concept_id": "common_denominator", "name": "Common denominator" },
+    { "concept_id": "equivalent_fractions", "name": "Equivalent fractions" },
+    { "concept_id": "adding_fractions", "name": "Adding fractions" }
+  ],
+  "source_references": [
+    { "source_id": "src_worksheet", "title": "Fractions Worksheet 5", "pages": [1] }
+  ],
+  "sections": [
+    {
+      "id": "intro",
+      "type": "explanation",
+      "concept_id": "common_denominator",
+      "difficulty_level": 1,
+      "title": "Why can't we just add the tops?",
+      "content": "You might want to add 1/2 + 1/3 by adding the tops and bottoms to get 2/5. But that is wrong. The denominator tells you the size of each piece, and halves and thirds are different sizes. Before we can add, both fractions must be cut into pieces of the same size. That shared size is called a common denominator.",
+      "grounding": { "basis": "source_explicit", "source_id": "src_worksheet", "pages": [1] }
+    },
+    {
+      "id": "explain_lcd",
+      "type": "explanation",
+      "concept_id": "equivalent_fractions",
+      "difficulty_level": 2,
+      "title": "Finding a common denominator",
+      "content": "To add 1/2 + 1/3, find a number both denominators divide into. Both 2 and 3 divide into 6, so 6 is the least common denominator. Rewrite each fraction with 6 on the bottom: 1/2 becomes 3/6, and 1/3 becomes 2/6. Now the pieces are the same size and we can add them.",
+      "grounding": { "basis": "source_explicit", "source_id": "src_worksheet", "pages": [1] }
+    },
+    {
+      "id": "q_why_common",
+      "type": "multiple_choice",
+      "concept_id": "common_denominator",
+      "difficulty_level": 2,
+      "selection_mode": "single",
+      "question": "Why do we need a common denominator before adding fractions?",
+      "options": [
+        { "id": "a", "text": "So both fractions are cut into pieces of the same size" },
+        { "id": "b", "text": "To make the numbers bigger" },
+        { "id": "c", "text": "Because the tops must always match" },
+        { "id": "d", "text": "It is just a rule with no reason" }
+      ],
+      "correct_answer_ids": ["a"],
+      "hint": "Think about why 1/2 and 1/3 can't be added directly. What is different about the pieces?",
+      "correct_feedback": "Exactly. Adding only works when the pieces are the same size, which is what a common denominator guarantees.",
+      "incorrect_feedback": "Not quite. The denominator is the size of each piece. We need a common denominator so both fractions have the same size pieces, which we can then add.",
+      "grounding": { "basis": "interpretation", "source_id": "src_worksheet", "pages": [1] }
+    },
+    {
+      "id": "q_lcd_multi",
+      "type": "multiple_choice",
+      "concept_id": "common_denominator",
+      "difficulty_level": 3,
+      "selection_mode": "multiple",
+      "question": "Which of these are common denominators you could use for 1/4 and 1/6? Select all that apply.",
+      "options": [
+        { "id": "a", "text": "12" },
+        { "id": "b", "text": "24" },
+        { "id": "c", "text": "10" },
+        { "id": "d", "text": "5" }
+      ],
+      "correct_answer_ids": ["a", "b"],
+      "hint": "A common denominator must be a multiple of both 4 and 6. The least one is 12, but larger multiples also work.",
+      "correct_feedback": "Right. Both 12 and 24 are multiples of 4 and 6. 12 is the least common denominator, and 24 works too.",
+      "incorrect_feedback": "Check each number: it must divide evenly by both 4 and 6. 12 and 24 do; 10 and 5 do not.",
+      "grounding": { "basis": "interpretation", "source_id": "src_worksheet", "pages": [1] }
+    },
+    {
+      "id": "q_equiv_blank",
+      "type": "fill_in_the_blank",
+      "concept_id": "equivalent_fractions",
+      "difficulty_level": 3,
+      "template": "To add 1/2 + 1/3, rewrite them as 3/6 and {{b1}}, then add to get {{b2}}.",
+      "blanks": [
+        { "id": "b1", "accepted_answers": ["2/6"], "case_sensitive": false },
+        { "id": "b2", "accepted_answers": ["5/6"], "case_sensitive": false }
+      ],
+      "hint": "1/3 with a denominator of 6 is 2/6. Then add the numerators: 3 + 2 over 6.",
+      "correct_feedback": "Perfect: 3/6 + 2/6 = 5/6.",
+      "incorrect_feedback": "1/3 equals 2/6. Adding 3/6 + 2/6 keeps the denominator and adds the tops: 5/6.",
+      "grounding": { "basis": "interpretation", "source_id": "src_worksheet", "pages": [1] }
+    },
+    {
+      "id": "q_steps_order",
+      "type": "drag_into_order",
+      "concept_id": "adding_fractions",
+      "difficulty_level": 4,
+      "instruction": "Put the steps for adding 2/3 + 1/4 in the correct order.",
+      "items": [
+        { "id": "s_lcd", "text": "Find the least common denominator (12)" },
+        { "id": "s_rewrite", "text": "Rewrite both fractions with denominator 12 (8/12 and 3/12)" },
+        { "id": "s_add", "text": "Add the numerators (8/12 + 3/12)" },
+        { "id": "s_result", "text": "Write the answer (11/12)" }
+      ],
+      "correct_order": ["s_lcd", "s_rewrite", "s_add", "s_result"],
+      "hint": "You must make the pieces the same size before you can add them.",
+      "correct_feedback": "Exactly right. Common denominator first, rewrite, add the tops, then state the result.",
+      "incorrect_feedback": "Reorder: you can only add once both fractions share a denominator, so finding and applying the common denominator comes before adding.",
+      "grounding": { "basis": "interpretation", "source_id": "src_worksheet", "pages": [1] }
+    },
+    {
+      "id": "challenge",
+      "type": "multiple_choice",
+      "concept_id": "adding_fractions",
+      "difficulty_level": 5,
+      "selection_mode": "single",
+      "question": "A recipe needs 1/2 cup of milk and 1/3 cup of water. How much liquid is that in total?",
+      "options": [
+        { "id": "a", "text": "5/6 cup" },
+        { "id": "b", "text": "2/5 cup" },
+        { "id": "c", "text": "1/6 cup" }
+      ],
+      "correct_answer_ids": ["a"],
+      "hint": "Convert to sixths first: 1/2 = 3/6 and 1/3 = 2/6.",
+      "correct_feedback": "Excellent! 3/6 + 2/6 = 5/6 cup. You applied everything you learned.",
+      "incorrect_feedback": "Convert both to sixths: 3/6 + 2/6 = 5/6 cup. Adding the bottoms (getting 2/5) is the common mistake to avoid.",
+      "grounding": { "basis": "interpretation", "source_id": "src_worksheet", "pages": [1] }
+    }
+  ],
+  "completion_message": "Strong work! You can now find a common denominator and add fractions, even in a real recipe."
+}

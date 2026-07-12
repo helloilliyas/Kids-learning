@@ -1,0 +1,132 @@
+{
+  "schema_version": "1.0",
+  "lesson_id": "lesson_water_cycle_001",
+  "title": "The Water Cycle",
+  "subject": "Science",
+  "language": "en",
+  "age": 9,
+  "difficulty": "beginner",
+  "estimated_duration_minutes": 12,
+  "learning_objectives": [
+    "Understand that water changes state as it moves through the water cycle",
+    "Identify evaporation, condensation, and precipitation",
+    "Put the stages of the water cycle in order"
+  ],
+  "concepts": [
+    { "concept_id": "evaporation", "name": "Evaporation" },
+    { "concept_id": "condensation", "name": "Condensation" },
+    { "concept_id": "precipitation", "name": "Precipitation" }
+  ],
+  "source_references": [
+    { "source_id": "src_science_book", "title": "Grade 4 Science, Chapter 3", "pages": [1, 2] }
+  ],
+  "sections": [
+    {
+      "id": "intro",
+      "type": "explanation",
+      "concept_id": "evaporation",
+      "difficulty_level": 1,
+      "title": "Water is always on the move",
+      "content": "Water does not stay in one place. It travels from the ground to the sky and back again, over and over. This journey is called the water cycle. Today you will learn its three main steps.",
+      "grounding": { "basis": "source_explicit", "source_id": "src_science_book", "pages": [1] }
+    },
+    {
+      "id": "explain_evaporation",
+      "type": "explanation",
+      "concept_id": "evaporation",
+      "difficulty_level": 1,
+      "title": "What is evaporation?",
+      "content": "When the sun warms water in a puddle, lake, or ocean, tiny bits of the water turn into a gas called water vapour. This gas floats up into the air. We call this evaporation. Heat is what makes it happen.",
+      "image_description": "The sun shining on a lake with arrows of water vapour rising into the sky.",
+      "grounding": { "basis": "source_explicit", "source_id": "src_science_book", "pages": [1] }
+    },
+    {
+      "id": "q_evaporation_cause",
+      "type": "multiple_choice",
+      "concept_id": "evaporation",
+      "difficulty_level": 2,
+      "selection_mode": "single",
+      "question": "What causes water to evaporate?",
+      "options": [
+        { "id": "a", "text": "Heat from the sun" },
+        { "id": "b", "text": "Cold wind" },
+        { "id": "c", "text": "Darkness at night" }
+      ],
+      "correct_answer_ids": ["a"],
+      "hint": "Think about what happens to a puddle on a hot, sunny day.",
+      "correct_feedback": "Yes! Heat gives water enough energy to turn into vapour and rise into the air.",
+      "incorrect_feedback": "Not quite. Cold and darkness slow water down. It is heat, especially from the sun, that turns water into vapour.",
+      "grounding": { "basis": "source_explicit", "source_id": "src_science_book", "pages": [1] }
+    },
+    {
+      "id": "explain_condensation",
+      "type": "explanation",
+      "concept_id": "condensation",
+      "difficulty_level": 2,
+      "title": "What is condensation?",
+      "content": "High in the sky the air is cold. When water vapour gets cold, it turns back into tiny drops of liquid water. These drops gather together to make clouds. Turning from gas back into liquid is called condensation.",
+      "grounding": { "basis": "source_explicit", "source_id": "src_science_book", "pages": [2] }
+    },
+    {
+      "id": "q_condensation_tf",
+      "type": "true_false",
+      "concept_id": "condensation",
+      "difficulty_level": 2,
+      "statement": "Clouds are made when water vapour cools down and turns into tiny water drops.",
+      "correct_answer": true,
+      "hint": "Remember what happens to vapour when it reaches the cold air high in the sky.",
+      "correct_feedback": "Correct! Cooling vapour condenses into the water drops that form clouds.",
+      "incorrect_feedback": "Actually this is true. When vapour cools it condenses into tiny drops, and many drops together make a cloud.",
+      "grounding": { "basis": "source_explicit", "source_id": "src_science_book", "pages": [2] }
+    },
+    {
+      "id": "q_precip_blank",
+      "type": "fill_in_the_blank",
+      "concept_id": "precipitation",
+      "difficulty_level": 3,
+      "template": "When cloud drops get heavy, they fall to the ground as {{b1}}.",
+      "blanks": [
+        { "id": "b1", "accepted_answers": ["rain", "precipitation", "snow"], "case_sensitive": false }
+      ],
+      "word_bank": ["rain", "sunshine", "wind", "heat"],
+      "hint": "What falls from a cloud on a stormy day?",
+      "correct_feedback": "That's right. Water falls back to earth as rain, snow, or hail. This is called precipitation.",
+      "incorrect_feedback": "Think about a rainy day. When cloud drops grow too heavy, they fall as rain.",
+      "grounding": { "basis": "source_explicit", "source_id": "src_science_book", "pages": [2] }
+    },
+    {
+      "id": "q_match",
+      "type": "match_pairs",
+      "concept_id": "evaporation",
+      "difficulty_level": 3,
+      "instruction": "Match each step of the water cycle to what happens.",
+      "pairs": [
+        { "left": { "id": "l1", "text": "Evaporation" }, "right": { "id": "r1", "text": "Water turns into vapour and rises" } },
+        { "left": { "id": "l2", "text": "Condensation" }, "right": { "id": "r2", "text": "Vapour cools and forms clouds" } },
+        { "left": { "id": "l3", "text": "Precipitation" }, "right": { "id": "r3", "text": "Water falls back to the ground" } }
+      ],
+      "hint": "Say each step out loud and picture where the water is.",
+      "correct_feedback": "Excellent matching! You know all three steps of the water cycle.",
+      "incorrect_feedback": "Close! Remember: evaporation rises up, condensation makes clouds, precipitation falls down.",
+      "grounding": { "basis": "interpretation", "source_id": "src_science_book", "pages": [1, 2] }
+    },
+    {
+      "id": "q_order",
+      "type": "drag_into_order",
+      "concept_id": "precipitation",
+      "difficulty_level": 4,
+      "instruction": "Put the water cycle in the correct order, starting from the lake.",
+      "items": [
+        { "id": "i_evap", "text": "Water evaporates from the lake" },
+        { "id": "i_cond", "text": "Vapour condenses into clouds" },
+        { "id": "i_precip", "text": "Rain falls to the ground" }
+      ],
+      "correct_order": ["i_evap", "i_cond", "i_precip"],
+      "hint": "Follow one drop of water on its journey up and back down.",
+      "correct_feedback": "Perfect order! The cycle then repeats again and again.",
+      "incorrect_feedback": "Try again. Water first rises (evaporates), then forms clouds (condenses), then falls (precipitation).",
+      "grounding": { "basis": "interpretation", "source_id": "src_science_book", "pages": [1, 2] }
+    }
+  ],
+  "completion_message": "Brilliant work! You followed water all the way through its cycle: up as vapour, into clouds, and back down as rain."
+}

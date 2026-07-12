@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.0",
+  "lesson_id": "lesson_shapes_001",
+  "title": "Fun with Shapes",
+  "subject": "Maths",
+  "language": "en",
+  "age": 5,
+  "difficulty": "beginner",
+  "estimated_duration_minutes": 6,
+  "learning_objectives": [
+    "Recognise a circle, a square, and a triangle",
+    "Count the sides of a shape"
+  ],
+  "concepts": [
+    { "concept_id": "shape_names", "name": "Naming shapes" },
+    { "concept_id": "counting_sides", "name": "Counting sides" }
+  ],
+  "source_references": [],
+  "sections": [
+    {
+      "id": "intro",
+      "type": "explanation",
+      "concept_id": "shape_names",
+      "difficulty_level": 1,
+      "title": "Let's find shapes!",
+      "content": "Shapes are all around us. A ball is a circle. A window is a square. A slice of pizza is a triangle. Let's play with them!",
+      "image_description": "A friendly circle, square, and triangle with smiling faces.",
+      "grounding": { "basis": "general_knowledge" }
+    },
+    {
+      "id": "q_circle",
+      "type": "multiple_choice",
+      "concept_id": "shape_names",
+      "difficulty_level": 1,
+      "selection_mode": "single",
+      "question": "Which one is a circle?",
+      "options": [
+        { "id": "a", "text": "Circle (round like a ball)" },
+        { "id": "b", "text": "Square (four flat sides)" }
+      ],
+      "correct_answer_ids": ["a"],
+      "hint": "A circle is round with no corners.",
+      "correct_feedback": "Yes! A circle is round all the way around.",
+      "incorrect_feedback": "That one has corners. A circle is round with no corners at all.",
+      "grounding": { "basis": "general_knowledge" }
+    },
+    {
+      "id": "q_triangle_sides",
+      "type": "true_false",
+      "concept_id": "counting_sides",
+      "difficulty_level": 2,
+      "statement": "A triangle has three sides.",
+      "correct_answer": true,
+      "hint": "Count the straight edges of a triangle with your finger: 1, 2, 3.",
+      "correct_feedback": "Well done! A triangle always has three sides.",
+      "incorrect_feedback": "It is true! Count them: one, two, three. A triangle has three sides.",
+      "grounding": { "basis": "general_knowledge" }
+    },
+    {
+      "id": "q_match_shapes",
+      "type": "match_pairs",
+      "concept_id": "shape_names",
+      "difficulty_level": 2,
+      "instruction": "Match each shape to something that looks like it.",
+      "pairs": [
+        { "left": { "id": "l1", "text": "Circle" }, "right": { "id": "r1", "text": "A ball" } },
+        { "left": { "id": "l2", "text": "Square" }, "right": { "id": "r2", "text": "A window" } },
+        { "left": { "id": "l3", "text": "Triangle" }, "right": { "id": "r3", "text": "A slice of pizza" } }
+      ],
+      "hint": "Picture each thing in your head. What shape is it?",
+      "correct_feedback": "Great job matching the shapes!",
+      "incorrect_feedback": "Almost! A ball is round like a circle, a window is a square, and pizza is a triangle.",
+      "grounding": { "basis": "general_knowledge" }
+    }
+  ],
+  "completion_message": "Yay! You found circles, squares, and triangles. You are a shape star!"
+}
