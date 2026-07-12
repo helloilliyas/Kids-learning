@@ -69,13 +69,23 @@ private val KidsShapes = Shapes(
     extraLarge = RoundedCornerShape(28.dp),
 )
 
+// Deliberately smaller than Material defaults: the workbook look is dense and
+// lean, closer to print than to a marketing page.
 private val KidsTypography = Typography().let { base ->
     base.copy(
-        headlineMedium = base.headlineMedium.copy(fontWeight = FontWeight.ExtraBold),
-        headlineSmall = base.headlineSmall.copy(fontWeight = FontWeight.Bold),
-        titleLarge = base.titleLarge.copy(fontWeight = FontWeight.Bold, lineHeight = 28.sp),
-        titleMedium = base.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-        bodyLarge = base.bodyLarge.copy(fontSize = 16.sp, lineHeight = 24.sp),
+        headlineMedium = base.headlineMedium.copy(
+            fontWeight = FontWeight.ExtraBold, fontSize = 22.sp, lineHeight = 28.sp),
+        headlineSmall = base.headlineSmall.copy(
+            fontWeight = FontWeight.Bold, fontSize = 19.sp, lineHeight = 25.sp),
+        titleLarge = base.titleLarge.copy(
+            fontWeight = FontWeight.Bold, fontSize = 17.sp, lineHeight = 23.sp),
+        titleMedium = base.titleMedium.copy(
+            fontWeight = FontWeight.SemiBold, fontSize = 15.sp, lineHeight = 21.sp),
+        titleSmall = base.titleSmall.copy(fontWeight = FontWeight.SemiBold, fontSize = 13.sp),
+        bodyLarge = base.bodyLarge.copy(fontSize = 14.sp, lineHeight = 21.sp),
+        bodyMedium = base.bodyMedium.copy(fontSize = 13.sp, lineHeight = 19.sp),
+        labelLarge = base.labelLarge.copy(fontSize = 13.sp),
+        labelMedium = base.labelMedium.copy(fontSize = 11.sp),
     )
 }
 

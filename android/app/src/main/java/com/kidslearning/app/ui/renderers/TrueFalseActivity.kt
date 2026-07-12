@@ -40,7 +40,7 @@ fun TrueFalseActivity(
                 index = 3, // green slot in the palette
                 selected = choice == true,
                 onClick = { choice = true },
-                minHeight = 76,
+                minHeight = 56,
                 modifier = Modifier.weight(1f),
             )
             OptionCard(
@@ -49,7 +49,7 @@ fun TrueFalseActivity(
                 index = 4, // red-pink slot in the palette
                 selected = choice == false,
                 onClick = { choice = false },
-                minHeight = 76,
+                minHeight = 56,
                 modifier = Modifier.weight(1f),
             )
         }

@@ -66,16 +66,16 @@ fun ActivityScaffold(
     var feedbackIsPositive by remember(activity.id) { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
 
-    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp)) {
+    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
         QuestionBadge(number = number, solved = solved)
 
         Column(
             modifier = Modifier.weight(1f).padding(start = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 activity.emoji?.let {
-                    Text(it, fontSize = 24.sp, modifier = Modifier.padding(end = 8.dp))
+                    Text(it, fontSize = 19.sp, modifier = Modifier.padding(end = 8.dp))
                 }
                 SpeakableText(
                     text = prompt,
@@ -136,7 +136,7 @@ fun ActivityScaffold(
                                 onIncorrectAttempt()
                             }
                         },
-                        modifier = Modifier.sizeIn(minHeight = 46.dp),
+                        modifier = Modifier.sizeIn(minHeight = 40.dp),
                     ) { Text("Check") }
                     if (!hintShown) {
                         TextButton(onClick = { hintShown = true }) { Text("💡 Hint") }
@@ -152,7 +152,7 @@ private fun QuestionBadge(number: Int?, solved: Boolean) {
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
-            .size(30.dp)
+            .size(26.dp)
             .background(
                 if (solved) MaterialTheme.colorScheme.tertiary else Workbook.Blue,
                 CircleShape,
@@ -179,10 +179,10 @@ private fun FeedbackPill(
         shape = MaterialTheme.shapes.small,
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            modifier = Modifier.padding(horizontal = 11.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(emoji, fontSize = 18.sp, modifier = Modifier.padding(end = 8.dp))
+            Text(emoji, fontSize = 15.sp, modifier = Modifier.padding(end = 7.dp))
             Text(text, style = MaterialTheme.typography.bodyMedium)
         }
     }

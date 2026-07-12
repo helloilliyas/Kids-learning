@@ -42,7 +42,7 @@ fun OptionCard(
     modifier: Modifier = Modifier,
     emoji: String? = null,
     badge: String? = null,
-    minHeight: Int = 54,
+    minHeight: Int = 46,
 ) {
     val (container, accent) = OptionPalette[index % OptionPalette.size]
     val scale by animateFloatAsState(
@@ -71,10 +71,10 @@ fun OptionCard(
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
         ) {
             if (emoji != null) {
-                Text(emoji, fontSize = 30.sp, modifier = Modifier.padding(end = 12.dp))
+                Text(emoji, fontSize = 22.sp, modifier = Modifier.padding(end = 10.dp))
             }
             Text(
                 text,
@@ -85,7 +85,7 @@ fun OptionCard(
                 Surface(
                     shape = CircleShape,
                     color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(32.dp).padding(start = 0.dp),
+                    modifier = Modifier.size(26.dp).padding(start = 0.dp),
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Text(

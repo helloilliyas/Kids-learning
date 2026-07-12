@@ -91,11 +91,11 @@ fun FillInTheBlankActivity(
                         ),
                         border = BorderStroke(2.dp, accent.copy(alpha = if (used) 0.1f else 0.4f)),
                         elevation = CardDefaults.cardElevation(defaultElevation = if (used) 0.dp else 3.dp),
-                        modifier = Modifier.sizeIn(minHeight = 52.dp),
+                        modifier = Modifier.sizeIn(minHeight = 42.dp),
                     ) {
                         Text(
                             word,
-                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp),
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
                             style = MaterialTheme.typography.titleMedium,
                         )
                     }

@@ -216,16 +216,16 @@ private fun HeaderBar(lesson: Lesson, correct: Int, total: Int) {
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
         ) {
             // Unit badge, like the orange number square in the reference design.
             Surface(
                 color = Workbook.Coral,
                 shape = MaterialTheme.shapes.small,
-                modifier = Modifier.size(40.dp),
+                modifier = Modifier.size(34.dp),
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Text(subjectEmoji(lesson.subject), fontSize = 20.sp)
+                    Text(subjectEmoji(lesson.subject), fontSize = 17.sp)
                 }
             }
             Text(

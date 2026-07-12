@@ -30,7 +30,7 @@ fun ExplanationCard(
     speak: (String) -> Unit,
 ) {
     Column(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Card(
@@ -39,12 +39,12 @@ fun ExplanationCard(
             shape = MaterialTheme.shapes.medium,
         ) {
             Column(
-                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                modifier = Modifier.fillMaxWidth().padding(14.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     section.emoji?.let {
-                        Text(it, fontSize = 34.sp, modifier = Modifier.padding(end = 10.dp))
+                        Text(it, fontSize = 26.sp, modifier = Modifier.padding(end = 10.dp))
                     }
                     SpeakableText(
                         text = section.title,
@@ -72,7 +72,7 @@ fun ExplanationCard(
                     modifier = Modifier.padding(12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text("🖼", fontSize = 22.sp, modifier = Modifier.padding(end = 10.dp))
+                    Text("🖼", fontSize = 18.sp, modifier = Modifier.padding(end = 10.dp))
                     Text(description, style = MaterialTheme.typography.bodyMedium)
                 }
             }
