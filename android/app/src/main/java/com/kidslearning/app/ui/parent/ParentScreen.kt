@@ -1,5 +1,6 @@
 package com.kidslearning.app.ui.parent
 
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -47,6 +48,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.FileProvider
 import com.kidslearning.app.data.local.Prefs
 import com.kidslearning.app.data.local.SourceImages
 import com.kidslearning.app.data.remote.BackendClient
@@ -54,6 +56,7 @@ import com.kidslearning.app.data.remote.DirectGenerator
 import com.kidslearning.app.domain.model.Lesson
 import com.kidslearning.app.ui.theme.Workbook
 import kotlinx.coroutines.launch
+import java.io.File
 
 /**
  * Parent mode: create a lesson from a topic, optional pasted text, and optional
@@ -86,10 +89,27 @@ fun ParentScreen(
     var busy by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
 
+    // Full-resolution capture: TakePicture writes the camera's real JPEG to a
+    // FileProvider URI (TakePicturePreview only returns a small preview bitmap,
+    // which made photographed pages blurry).
+    var cameraUri by remember { mutableStateOf<Uri?>(null) }
     val takePhoto = rememberLauncherForActivityResult(
-        ActivityResultContracts.TakePicturePreview()
-    ) { bitmap ->
-        bitmap?.let { images.add(SourceImages.compress(it)) }
+        ActivityResultContracts.TakePicture()
+    ) { saved ->
+        val uri = cameraUri
+        if (saved && uri != null) {
+            SourceImages.fromUri(context, uri)?.let { images.add(it) }
+        }
+        uri?.let { context.contentResolver.delete(it, null, null) }
+        cameraUri = null
+    }
+    fun launchCamera() {
+        val shots = File(context.cacheDir, "camera").apply { mkdirs() }
+        val file = File.createTempFile("shot_", ".jpg", shots)
+        val uri = FileProvider.getUriForFile(
+            context, "${context.packageName}.fileprovider", file)
+        cameraUri = uri
+        takePhoto.launch(uri)
     }
     val pickImages = rememberLauncherForActivityResult(
         ActivityResultContracts.PickMultipleVisualMedia(SourceImages.MAX_IMAGES)
@@ -185,7 +205,7 @@ fun ParentScreen(
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         val room = images.size < SourceImages.MAX_IMAGES
-                        OutlinedButton(onClick = { takePhoto.launch(null) }, enabled = room) {
+                        OutlinedButton(onClick = { launchCamera() }, enabled = room) {
                             Text("📷 Camera")
                         }
                         OutlinedButton(
@@ -210,7 +230,7 @@ fun ParentScreen(
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             images.forEachIndexed { index, bytes ->
-                                val bitmap = remember(bytes) { SourceImages.decode(bytes) }
+                                val bitmap = remember(bytes) { SourceImages.decodeThumbnail(bytes) }
                                 if (bitmap != null) {
                                     Card(
                                         onClick = { images.removeAt(index) },
@@ -289,7 +309,7 @@ fun ParentScreen(
                                                 age = age.toInt(),
                                                 subject = subject.trim(),
                                                 objective = objective.trim(),
-                                                sourceImages = images.map(SourceImages::toBase64),
+                                                sourceImages = images.map(SourceImages::toVisionBase64),
                                             )
                                         )
                                         val lesson = response.lesson

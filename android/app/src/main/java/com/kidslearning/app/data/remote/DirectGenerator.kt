@@ -48,7 +48,7 @@ class DirectGenerator(apiKey: String, private val context: Context) {
         numQuestions: Int = 6,
         language: String = "en",
     ): DirectResult {
-        val uploadedBase64 = uploadedImages.map(SourceImages::toBase64)
+        val uploadedBase64 = uploadedImages.map(SourceImages::toVisionBase64)
 
         // Stage 1: read the source (text + images) and produce a teaching plan.
         val plan = client.generateStructured(

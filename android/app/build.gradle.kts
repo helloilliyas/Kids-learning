@@ -60,6 +60,9 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.8.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.5")
 
+    // EXIF orientation for full-resolution camera/gallery photos.
+    implementation("androidx.exifinterface:exifinterface:1.3.7")
+
     // JSON: kotlinx.serialization mirrors the shared lesson schema.
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.1")
 

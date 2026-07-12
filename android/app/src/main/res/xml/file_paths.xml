@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Scratch space for full-resolution camera captures; each shot is
+         deleted as soon as it has been compressed into the lesson. -->
+    <cache-path name="camera" path="camera/" />
+</paths>

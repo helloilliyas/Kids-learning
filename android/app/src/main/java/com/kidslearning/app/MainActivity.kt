@@ -165,8 +165,14 @@ private fun App() {
         )
 
         is Screen.Playing -> {
+            // LRU-capped: display images are now 2048px (~16MB decoded), so only
+            // a handful stay in memory while the child pages through the lesson.
             val imageCache = remember(current.lesson.lessonId) {
-                mutableMapOf<Int, androidx.compose.ui.graphics.ImageBitmap?>()
+                object : LinkedHashMap<Int, androidx.compose.ui.graphics.ImageBitmap?>(8, 0.75f, true) {
+                    override fun removeEldestEntry(
+                        eldest: MutableMap.MutableEntry<Int, androidx.compose.ui.graphics.ImageBitmap?>,
+                    ) = size > 5
+                }
             }
             CompositionLocalProvider(
                 LocalLessonImageResolver provides { index ->
