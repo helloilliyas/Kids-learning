@@ -12,55 +12,77 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 /**
- * Kid-friendly design system: a bright, high-contrast palette, big rounded shapes,
- * and generous type. Child mode always uses the light scheme -- young readers do
- * better on light backgrounds, and it keeps the colour system predictable.
+ * Digital-workbook design system, matched to the reference screenshots: a soft
+ * blue page background, white rounded worksheet cards, cream teaching panels,
+ * pink data panels, a friendly blue for primary actions and question badges, and
+ * coral for back/secondary accents. Calm, professional, print-workbook feel.
  */
+object Workbook {
+    val PageBackground = Color(0xFFD9E6F4)   // soft blue behind everything
+    val CardWhite = Color(0xFFFEFEFC)        // worksheet card
+    val Cream = Color(0xFFFAF3DE)            // instruction / definition panels
+    val CreamBorder = Color(0xFFEADFBE)
+    val Pink = Color(0xFFF9E2E7)             // data-set panels
+    val PinkBorder = Color(0xFFEFC3CD)
+    val Blue = Color(0xFF4C7FE0)             // header, primary buttons, badges
+    val BlueDark = Color(0xFF3B66BD)
+    val BlueLight = Color(0xFFDCE9FB)        // selected fills, chips
+    val Coral = Color(0xFFF08476)            // back button, drag accents
+    val GreenPill = Color(0xFFEAF2D9)        // correct-answer highlight
+    val GreenBorder = Color(0xFF9DBF6E)
+    val AmberPill = Color(0xFFFDF0D5)        // gentle try-again highlight
+    val AmberBorder = Color(0xFFE5C27C)
+    val TextDark = Color(0xFF33415C)         // main ink
+    val TextMuted = Color(0xFF6B7A99)
+}
 
-private val KidsColors = lightColorScheme(
-    primary = Color(0xFF5E60CE),          // friendly indigo
+private val WorkbookColors = lightColorScheme(
+    primary = Workbook.Blue,
     onPrimary = Color.White,
-    primaryContainer = Color(0xFFDCDDFF),
-    onPrimaryContainer = Color(0xFF23245B),
-    secondary = Color(0xFFFF6B9D),        // playful pink
+    primaryContainer = Workbook.BlueLight,
+    onPrimaryContainer = Workbook.TextDark,
+    secondary = Workbook.Coral,
     onSecondary = Color.White,
-    secondaryContainer = Color(0xFFFFE1EC),
-    onSecondaryContainer = Color(0xFF5C0A2E),
-    tertiary = Color(0xFF2A9D8F),         // success teal
+    secondaryContainer = Workbook.Pink,
+    onSecondaryContainer = Color(0xFF6B2737),
+    tertiary = Color(0xFF6E9B3D),
     onTertiary = Color.White,
-    tertiaryContainer = Color(0xFFC9F2E4),
-    onTertiaryContainer = Color(0xFF00382E),
-    error = Color(0xFFE76F51),
-    errorContainer = Color(0xFFFFE3C9),   // warm "let's try again" amber, not scary red
-    onErrorContainer = Color(0xFF6A3200),
-    background = Color(0xFFFDFBFF),
-    surface = Color(0xFFFDFBFF),
-    surfaceVariant = Color(0xFFF0EEF8),
-    onSurfaceVariant = Color(0xFF47464F),
+    tertiaryContainer = Workbook.GreenPill,
+    onTertiaryContainer = Color(0xFF33470F),
+    error = Color(0xFFD96A5B),
+    errorContainer = Workbook.AmberPill,
+    onErrorContainer = Color(0xFF6A4A00),
+    background = Workbook.PageBackground,
+    onBackground = Workbook.TextDark,
+    surface = Workbook.CardWhite,
+    onSurface = Workbook.TextDark,
+    surfaceVariant = Color(0xFFEFF3FA),
+    onSurfaceVariant = Workbook.TextMuted,
+    outline = Color(0xFFC4D2E6),
 )
 
 private val KidsShapes = Shapes(
-    extraSmall = RoundedCornerShape(10.dp),
-    small = RoundedCornerShape(14.dp),
-    medium = RoundedCornerShape(20.dp),
-    large = RoundedCornerShape(26.dp),
-    extraLarge = RoundedCornerShape(32.dp),
+    extraSmall = RoundedCornerShape(8.dp),
+    small = RoundedCornerShape(12.dp),
+    medium = RoundedCornerShape(16.dp),
+    large = RoundedCornerShape(22.dp),
+    extraLarge = RoundedCornerShape(28.dp),
 )
 
 private val KidsTypography = Typography().let { base ->
     base.copy(
         headlineMedium = base.headlineMedium.copy(fontWeight = FontWeight.ExtraBold),
         headlineSmall = base.headlineSmall.copy(fontWeight = FontWeight.Bold),
-        titleLarge = base.titleLarge.copy(fontWeight = FontWeight.Bold, lineHeight = 30.sp),
+        titleLarge = base.titleLarge.copy(fontWeight = FontWeight.Bold, lineHeight = 28.sp),
         titleMedium = base.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-        bodyLarge = base.bodyLarge.copy(fontSize = 17.sp, lineHeight = 26.sp),
+        bodyLarge = base.bodyLarge.copy(fontSize = 16.sp, lineHeight = 24.sp),
     )
 }
 
 @Composable
 fun KidsTheme(content: @Composable () -> Unit) {
     MaterialTheme(
-        colorScheme = KidsColors,
+        colorScheme = WorkbookColors,
         shapes = KidsShapes,
         typography = KidsTypography,
         content = content,
@@ -68,28 +90,28 @@ fun KidsTheme(content: @Composable () -> Unit) {
 }
 
 /**
- * Rotating pastel palette for answer cards: every option gets its own colour, the
- * "HTML design" feel the flat grey cards lacked. Pairs are (container, accent).
+ * Soft tint palette for answer cards -- calm workbook pastels, each option gets a
+ * distinct (container, accent) pair.
  */
 val OptionPalette: List<Pair<Color, Color>> = listOf(
-    Color(0xFFE3F2FD) to Color(0xFF1976D2), // blue
-    Color(0xFFFFF3E0) to Color(0xFFEF6C00), // orange
-    Color(0xFFF3E5F5) to Color(0xFF8E24AA), // purple
-    Color(0xFFE8F5E9) to Color(0xFF2E7D32), // green
-    Color(0xFFFFEBEE) to Color(0xFFC62828), // red-pink
-    Color(0xFFE0F7FA) to Color(0xFF00838F), // cyan
+    Color(0xFFEFF5FC) to Color(0xFF4C7FE0), // blue
+    Color(0xFFFDF2E3) to Color(0xFFE8A13C), // amber
+    Color(0xFFF6EEF9) to Color(0xFF9B59B6), // violet
+    Color(0xFFEDF7EE) to Color(0xFF57A05A), // green
+    Color(0xFFFDEEF0) to Color(0xFFD96A76), // rose
+    Color(0xFFEAF6F8) to Color(0xFF3D96A8), // teal
 )
 
-/** Gradient header colours per subject, with a stable fallback per lesson. */
+/** Gradient header colours per subject. */
 fun subjectGradient(subject: String): List<Color> {
     val s = subject.lowercase()
     return when {
-        "math" in s || "maths" in s -> listOf(Color(0xFF5E60CE), Color(0xFF9D4EDD))
-        "science" in s -> listOf(Color(0xFF2A9D8F), Color(0xFF4CC9F0))
+        "math" in s || "maths" in s -> listOf(Color(0xFF4C7FE0), Color(0xFF7B5FD9))
+        "science" in s -> listOf(Color(0xFF2A9D8F), Color(0xFF4CA8E0))
         "english" in s || "read" in s || "language" in s ->
-            listOf(Color(0xFFFF6B9D), Color(0xFFFFA07A))
-        "history" in s || "geo" in s -> listOf(Color(0xFFE9973E), Color(0xFFDB5375))
-        else -> listOf(Color(0xFF5E60CE), Color(0xFF48BFE3))
+            listOf(Color(0xFFE07A9B), Color(0xFFEC9A6D))
+        "history" in s || "geo" in s -> listOf(Color(0xFFE0913E), Color(0xFFCB5B75))
+        else -> listOf(Color(0xFF4C7FE0), Color(0xFF48A8D8))
     }
 }
 

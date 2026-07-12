@@ -25,6 +25,7 @@ import kotlin.random.Random
 @Composable
 fun MatchPairsActivity(
     section: MatchPairsSection,
+    number: Int?,
     readAloud: Boolean,
     speak: (String) -> Unit,
     onAnswered: (AnswerResult) -> Unit,
@@ -37,6 +38,7 @@ fun MatchPairsActivity(
 
     ActivityScaffold(
         activity = section,
+        number = number,
         prompt = section.instruction,
         readAloud = readAloud,
         speak = speak,

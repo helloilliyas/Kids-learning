@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun MultipleChoiceActivity(
     section: MultipleChoiceSection,
+    number: Int?,
     readAloud: Boolean,
     speak: (String) -> Unit,
     onAnswered: (AnswerResult) -> Unit,
@@ -29,6 +30,7 @@ fun MultipleChoiceActivity(
 
     ActivityScaffold(
         activity = section,
+        number = number,
         prompt = section.question,
         readAloud = readAloud,
         speak = speak,

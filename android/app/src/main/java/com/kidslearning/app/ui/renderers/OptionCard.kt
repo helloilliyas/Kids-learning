@@ -42,7 +42,7 @@ fun OptionCard(
     modifier: Modifier = Modifier,
     emoji: String? = null,
     badge: String? = null,
-    minHeight: Int = 60,
+    minHeight: Int = 54,
 ) {
     val (container, accent) = OptionPalette[index % OptionPalette.size]
     val scale by animateFloatAsState(

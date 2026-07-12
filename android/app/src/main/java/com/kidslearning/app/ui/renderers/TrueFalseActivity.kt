@@ -16,6 +16,7 @@ import com.kidslearning.app.domain.model.TrueFalseSection
 @Composable
 fun TrueFalseActivity(
     section: TrueFalseSection,
+    number: Int?,
     readAloud: Boolean,
     speak: (String) -> Unit,
     onAnswered: (AnswerResult) -> Unit,
@@ -24,6 +25,7 @@ fun TrueFalseActivity(
 
     ActivityScaffold(
         activity = section,
+        number = number,
         prompt = section.statement,
         readAloud = readAloud,
         speak = speak,

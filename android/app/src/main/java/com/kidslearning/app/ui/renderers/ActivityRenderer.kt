@@ -13,25 +13,26 @@ import com.kidslearning.app.domain.model.TrueFalseSection
 /**
  * Dispatches a [Section] to its native renderer. This is the heart of the
  * "AI generates data, not UI" design: the renderer library is fixed and reusable,
- * and any valid lesson JSON drives it. Adding a new activity type means adding one
- * branch here and one composable -- never a change to the app for new content.
+ * and any valid lesson JSON drives it.
  *
- * Every activity reports completion through [onAnswered] with the standardized
- * [AnswerResult], so the lesson player is agnostic to activity type.
+ * [number] is the exercise's position in the lesson's continuous numbering (like a
+ * printed workbook); explanations have none. Every activity reports completion
+ * through [onAnswered] with the standardized [AnswerResult].
  */
 @Composable
 fun RenderSection(
     section: Section,
+    number: Int?,
     readAloud: Boolean,
     speak: (String) -> Unit,
     onAnswered: (AnswerResult) -> Unit,
 ) {
     when (section) {
         is ExplanationSection -> ExplanationCard(section, readAloud, speak)
-        is MultipleChoiceSection -> MultipleChoiceActivity(section, readAloud, speak, onAnswered)
-        is TrueFalseSection -> TrueFalseActivity(section, readAloud, speak, onAnswered)
-        is FillInTheBlankSection -> FillInTheBlankActivity(section, readAloud, speak, onAnswered)
-        is MatchPairsSection -> MatchPairsActivity(section, readAloud, speak, onAnswered)
-        is DragIntoOrderSection -> DragIntoOrderActivity(section, readAloud, speak, onAnswered)
+        is MultipleChoiceSection -> MultipleChoiceActivity(section, number, readAloud, speak, onAnswered)
+        is TrueFalseSection -> TrueFalseActivity(section, number, readAloud, speak, onAnswered)
+        is FillInTheBlankSection -> FillInTheBlankActivity(section, number, readAloud, speak, onAnswered)
+        is MatchPairsSection -> MatchPairsActivity(section, number, readAloud, speak, onAnswered)
+        is DragIntoOrderSection -> DragIntoOrderActivity(section, number, readAloud, speak, onAnswered)
     }
 }

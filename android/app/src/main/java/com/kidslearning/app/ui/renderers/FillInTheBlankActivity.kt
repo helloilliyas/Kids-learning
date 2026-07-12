@@ -36,6 +36,7 @@ import com.kidslearning.app.ui.theme.OptionPalette
 @Composable
 fun FillInTheBlankActivity(
     section: FillInTheBlankSection,
+    number: Int?,
     readAloud: Boolean,
     speak: (String) -> Unit,
     onAnswered: (AnswerResult) -> Unit,
@@ -56,6 +57,7 @@ fun FillInTheBlankActivity(
 
     ActivityScaffold(
         activity = section,
+        number = number,
         prompt = displayText(),
         readAloud = readAloud,
         speak = speak,

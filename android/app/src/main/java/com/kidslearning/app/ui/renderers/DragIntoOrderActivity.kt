@@ -22,6 +22,7 @@ import kotlin.random.Random
 @Composable
 fun DragIntoOrderActivity(
     section: DragIntoOrderSection,
+    number: Int?,
     readAloud: Boolean,
     speak: (String) -> Unit,
     onAnswered: (AnswerResult) -> Unit,
@@ -33,6 +34,7 @@ fun DragIntoOrderActivity(
 
     ActivityScaffold(
         activity = section,
+        number = number,
         prompt = section.instruction,
         readAloud = readAloud,
         speak = speak,
