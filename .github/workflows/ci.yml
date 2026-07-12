@@ -25,6 +25,8 @@ jobs:
 
   android-apk:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # allows the release step to upload the APK
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -37,9 +39,24 @@ jobs:
       - name: Build debug APK
         working-directory: android
         run: gradle assembleDebug --no-daemon
+      - name: Rename APK
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk kids-learning-debug.apk
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: kids-learning-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: kids-learning-debug.apk
           retention-days: 30
+      # A rolling prerelease gives a stable, phone-friendly direct-download link
+      # for the newest debug APK (artifacts require login and arrive zipped).
+      - name: Publish rolling debug release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: debug-latest
+          name: "Debug APK (latest)"
+          prerelease: true
+          files: kids-learning-debug.apk
+          body: |
+            Rolling debug build for testing. Install on Android by downloading
+            kids-learning-debug.apk and allowing installation from your browser
+            when prompted. Built from the latest push to the development branch.
