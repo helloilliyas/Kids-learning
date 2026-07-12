@@ -68,8 +68,9 @@ dependencies {
     // Background work (large PDF processing / uploads).
     implementation("androidx.work:work-runtime-ktx:2.9.1")
 
-    // On-device OCR (free, offline) so most images never hit a vision API.
-    implementation("com.google.mlkit:text-recognition:16.0.1")
+    // On-device OCR (com.google.mlkit:text-recognition) is added when the camera
+    // scan feature lands -- its bundled model adds ~30MB, so it doesn't ride along
+    // before any code uses it.
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.1")
