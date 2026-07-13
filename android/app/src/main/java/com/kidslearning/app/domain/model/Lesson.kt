@@ -108,6 +108,8 @@ data class AnimatedStorySection(
     @Serializable
     data class Scene(
         val text: String,
+        val label: String? = null,
+        val detail: String? = null,
         val emoji: String? = null,
         @SerialName("image_ref") val imageRef: Int? = null,
         @SerialName("image_search") val imageSearch: String? = null,

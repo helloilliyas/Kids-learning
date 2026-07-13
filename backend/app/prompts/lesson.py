@@ -153,9 +153,18 @@ Aim for about {num_questions} interactive activities.
 
 OPEN the lesson with ONE "animated_story" section: 3-6 short scenes that tell the
 core idea as a tiny story the app plays with animation, narration, and sounds.
-Each scene is one or two short sentences plus a visual (a big emoji, an
-image_search photo, or an uploaded image_ref). Make it warm and concrete — meet a
-character, watch something happen — not a list of facts.
+For every scene provide:
+- "label": a punchy 2-4 word headline.
+- "text": one or two short sentences, with 1-2 key vocabulary words wrapped in
+  *asterisks* (they render highlighted as the narrator says them).
+- A visual — PHOTOS FIRST: if the scene shows any real, photographable thing
+  (animal, place, object, food, vehicle), you MUST set image_search to its
+  Wikipedia article title. Use an emoji only for abstract ideas (feelings,
+  counting, "let's go!"). Scenes about an uploaded image use image_ref.
+- On about half the scenes, a "detail": a surprising one-sentence bonus fact the
+  child can tap to reveal ("Did you know?").
+Make it warm and concrete — meet a character, watch something happen — not a
+list of facts.
 
 After the story, structure the lesson as: alternating explanation cards and
 activities that build from difficulty_level 1 upward, ending with a challenge

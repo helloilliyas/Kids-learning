@@ -145,7 +145,9 @@ private fun sectionKind(section: Section): String = when (section) {
 private fun sectionText(section: Section): String = when (section) {
     is ExplanationSection -> "${section.title} — ${section.content}"
     is AnimatedStorySection -> section.title + ": " +
-        section.scenes.joinToString(" ▸ ") { "${it.emoji ?: ""} ${it.text}".trim() }
+        section.scenes.joinToString(" ▸ ") {
+            "${it.emoji ?: ""} ${it.text.replace("*", "")}".trim()
+        }
     is ChartSection -> section.title + ": " +
         section.items.joinToString { "${it.label} ${it.value}" }
     else -> AnswerKey.questionText(section).orEmpty()

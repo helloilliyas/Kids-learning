@@ -509,12 +509,22 @@
                 "type": "string",
                 "minLength": 1,
                 "maxLength": 200,
-                "description": "One or two short sentences, narrated aloud while the scene shows."
+                "description": "One or two short sentences, narrated aloud while the scene shows. Wrap 1-2 key vocabulary words in *asterisks* — they render highlighted."
+              },
+              "label": {
+                "type": "string",
+                "maxLength": 40,
+                "description": "Short punchy headline for the scene (2-4 words), shown big above the text."
+              },
+              "detail": {
+                "type": "string",
+                "maxLength": 200,
+                "description": "Optional bonus 'Did you know?' fact the child can tap to reveal and hear."
               },
               "emoji": {
                 "type": "string",
                 "maxLength": 16,
-                "description": "Big animated emoji for this scene (the visual when there is no photo)."
+                "description": "Big animated emoji for this scene — the fallback visual for abstract ideas when no photo fits."
               },
               "image_ref": {
                 "type": "integer",
@@ -523,7 +533,7 @@
               "image_search": {
                 "type": "string",
                 "maxLength": 60,
-                "description": "Wikipedia article title to fetch a real photo for this scene."
+                "description": "Wikipedia article title to fetch a real photo for this scene. REQUIRED whenever the scene shows a real, photographable thing (animal, place, object, person)."
               }
             }
           }

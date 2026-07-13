@@ -40,19 +40,27 @@
       },
       "scenes": [
         {
-          "text": "Good morning! The sun comes up over the farm.",
+          "label": "Good morning!",
+          "text": "The sun comes up over the *farm*.",
           "emoji": "🌅"
         },
         {
-          "text": "The cow says moo. She lives on the farm.",
-          "emoji": "🐄"
+          "label": "Meet the cow",
+          "text": "The cow says moo. She is a *farm* animal.",
+          "image_search": "Cattle",
+          "emoji": "🐄",
+          "detail": "A cow has one big stomach with four rooms inside for munching grass!"
         },
         {
-          "text": "Far away in the jungle, a lion wakes up. He is wild!",
-          "emoji": "🦁"
+          "label": "A wild lion",
+          "text": "Far away, a lion wakes up. He is *wild*!",
+          "image_search": "Lion",
+          "emoji": "🦁",
+          "detail": "A lion's roar is so loud you can hear it 8 kilometres away."
         },
         {
-          "text": "Farm or wild — every animal has a home. Let's meet them!",
+          "label": "Every animal has a home",
+          "text": "Farm or wild — let's meet them all!",
           "emoji": "🏡"
         }
       ]

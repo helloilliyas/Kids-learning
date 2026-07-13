@@ -7,9 +7,12 @@ import androidx.compose.material3.Typography
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kidslearning.app.R
 
 /**
  * Digital-workbook design system, matched to the reference screenshots: a soft
@@ -69,23 +72,47 @@ private val KidsShapes = Shapes(
     extraLarge = RoundedCornerShape(28.dp),
 )
 
+/**
+ * The app's typeface: Nunito (OFL), the rounded-but-professional family used by
+ * top children's education apps. Bundled so it renders identically on every
+ * device, offline.
+ */
+val Nunito = FontFamily(
+    Font(R.font.nunito_regular, FontWeight.Normal),
+    Font(R.font.nunito_semibold, FontWeight.SemiBold),
+    Font(R.font.nunito_bold, FontWeight.Bold),
+    Font(R.font.nunito_extrabold, FontWeight.ExtraBold),
+)
+
 // Deliberately smaller than Material defaults: the workbook look is dense and
-// lean, closer to print than to a marketing page.
+// lean, closer to print than to a marketing page. Every style is Nunito.
 private val KidsTypography = Typography().let { base ->
     base.copy(
+        displayLarge = base.displayLarge.copy(fontFamily = Nunito, fontWeight = FontWeight.ExtraBold),
+        displayMedium = base.displayMedium.copy(fontFamily = Nunito, fontWeight = FontWeight.ExtraBold),
+        displaySmall = base.displaySmall.copy(fontFamily = Nunito, fontWeight = FontWeight.ExtraBold),
+        headlineLarge = base.headlineLarge.copy(
+            fontFamily = Nunito, fontWeight = FontWeight.ExtraBold, fontSize = 26.sp, lineHeight = 32.sp),
         headlineMedium = base.headlineMedium.copy(
-            fontWeight = FontWeight.ExtraBold, fontSize = 22.sp, lineHeight = 28.sp),
+            fontFamily = Nunito, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp, lineHeight = 28.sp),
         headlineSmall = base.headlineSmall.copy(
-            fontWeight = FontWeight.Bold, fontSize = 19.sp, lineHeight = 25.sp),
+            fontFamily = Nunito, fontWeight = FontWeight.Bold, fontSize = 19.sp, lineHeight = 25.sp),
         titleLarge = base.titleLarge.copy(
-            fontWeight = FontWeight.Bold, fontSize = 17.sp, lineHeight = 23.sp),
+            fontFamily = Nunito, fontWeight = FontWeight.ExtraBold, fontSize = 17.sp, lineHeight = 23.sp),
         titleMedium = base.titleMedium.copy(
-            fontWeight = FontWeight.SemiBold, fontSize = 15.sp, lineHeight = 21.sp),
-        titleSmall = base.titleSmall.copy(fontWeight = FontWeight.SemiBold, fontSize = 13.sp),
-        bodyLarge = base.bodyLarge.copy(fontSize = 14.sp, lineHeight = 21.sp),
-        bodyMedium = base.bodyMedium.copy(fontSize = 13.sp, lineHeight = 19.sp),
-        labelLarge = base.labelLarge.copy(fontSize = 13.sp),
-        labelMedium = base.labelMedium.copy(fontSize = 11.sp),
+            fontFamily = Nunito, fontWeight = FontWeight.Bold, fontSize = 15.sp, lineHeight = 21.sp),
+        titleSmall = base.titleSmall.copy(
+            fontFamily = Nunito, fontWeight = FontWeight.Bold, fontSize = 13.sp),
+        bodyLarge = base.bodyLarge.copy(
+            fontFamily = Nunito, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, lineHeight = 21.sp),
+        bodyMedium = base.bodyMedium.copy(
+            fontFamily = Nunito, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, lineHeight = 19.sp),
+        bodySmall = base.bodySmall.copy(fontFamily = Nunito, fontWeight = FontWeight.SemiBold),
+        labelLarge = base.labelLarge.copy(
+            fontFamily = Nunito, fontWeight = FontWeight.Bold, fontSize = 13.sp),
+        labelMedium = base.labelMedium.copy(
+            fontFamily = Nunito, fontWeight = FontWeight.Bold, fontSize = 11.sp),
+        labelSmall = base.labelSmall.copy(fontFamily = Nunito, fontWeight = FontWeight.Bold),
     )
 }
 
